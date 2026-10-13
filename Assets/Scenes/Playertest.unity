@@ -1767,7 +1767,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
+  sprintSpeed: 8
+  jumpHeight: 0.4
+  gravity: -9.81
+  cameraTransform: {fileID: 0}
   mouseSensitivity: 2
+  maxLookAngle: 80
 --- !u!114 &1658942534
 MonoBehaviour:
   m_ObjectHideFlags: 0
