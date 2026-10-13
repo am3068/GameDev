@@ -14,6 +14,8 @@ Untitled Survival Game
 - Attack.
 - Defend.
 
+  Additional : Player can jump, sprint.
+
 ### 2. Environment and Biomes — REQUIRED
 
 - At least two parts of an environment with different aesthetics (two biomes), in the same or different levels.
