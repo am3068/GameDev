@@ -4,66 +4,80 @@ using UnityEngine;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
+    [Header("Movement")]
     public float moveSpeed = 5f;
+    public float sprintSpeed = 8f;
+    public float jumpHeight = 0.2f;
+    public float gravity = -9.81f;
+
+    [Header("Camera")]
+    public Transform cameraTransform;
     public float mouseSensitivity = 2f;
+    public float maxLookAngle = 80f;
 
     private CharacterController controller;
-    private Transform playerCamera;
-    private float cameraPitch;
     private float verticalVelocity;
+    private float cameraPitch;
 
     private void Start()
     {
         controller = GetComponent<CharacterController>();
 
-        Camera cam = GetComponentInChildren<Camera>();
-        if (cam != null)
-            playerCamera = cam.transform;
+        if (cameraTransform == null)
+        {
+            Camera childCamera = GetComponentInChildren<Camera>();
 
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
+            if (childCamera != null)
+                cameraTransform = childCamera.transform;
+        }
+
+        LockCursor();
     }
 
     private void Update()
     {
-        // Release mouse cursor with Escape key.
         if (Input.GetKeyDown(KeyCode.Escape))
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
         }
 
-        // Click inside Game view to capture the mouse if exited.
         if (Cursor.lockState != CursorLockMode.Locked &&
             Input.GetMouseButtonDown(0))
         {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
+            LockCursor();
         }
 
-        LookAround();
-        MovePlayer();
+        if (Cursor.lockState == CursorLockMode.Locked)
+            Look();
+
+        Move();
     }
 
-    private void LookAround()
+    private void Look()
     {
-        if (playerCamera == null ||
+        if (cameraTransform == null ||
             Cursor.lockState != CursorLockMode.Locked)
             return;
 
-        float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+        float mouseX =
+            Input.GetAxis("Mouse X") * mouseSensitivity;
+
+        float mouseY =
+            Input.GetAxis("Mouse Y") * mouseSensitivity;
 
         transform.Rotate(Vector3.up * mouseX);
 
         cameraPitch -= mouseY;
-        cameraPitch = Mathf.Clamp(cameraPitch, -80f, 80f);
+        cameraPitch = Mathf.Clamp(
+            cameraPitch, -maxLookAngle, maxLookAngle
+        );
 
-        playerCamera.localRotation =
+        cameraTransform.localRotation =
             Quaternion.Euler(cameraPitch, 0f, 0f);
     }
 
-    private void MovePlayer()
+    private void Move()
     {
         float x = Input.GetAxisRaw("Horizontal");
         float z = Input.GetAxisRaw("Vertical");
@@ -73,13 +87,37 @@ public class PlayerController : MonoBehaviour
 
         movement = Vector3.ClampMagnitude(movement, 1f);
 
+        // Keep the character grounded.
         if (controller.isGrounded && verticalVelocity < 0f)
+        {
             verticalVelocity = -2f;
+        }
 
-        verticalVelocity += -9.81f * Time.deltaTime;
+        // Jump only when grounded.
+        if (controller.isGrounded &&
+            Input.GetKeyDown(KeyCode.Space))
+        {
+            verticalVelocity =
+                Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
 
+        // Apply gravity.
+        verticalVelocity += gravity * Time.deltaTime;
         movement.y = verticalVelocity;
 
-        controller.Move(movement * moveSpeed * Time.deltaTime);
+        // Hold Left Shift to sprint.
+        float currentSpeed = Input.GetKey(KeyCode.LeftShift)
+            ? sprintSpeed
+            : moveSpeed;
+
+        controller.Move(
+            movement * currentSpeed * Time.deltaTime
+        );
+    }
+
+    private void LockCursor()
+    {
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 }
