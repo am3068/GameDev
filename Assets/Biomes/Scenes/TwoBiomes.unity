@@ -1377,7 +1377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sun: {fileID: 1278981109}
-  dayLengthInSeconds: 120
+  dayLengthInSeconds: 10
   timeOfDay: 0.25
   currentDay: 1
   nightAmbientIntensity: 0.05
