@@ -16,9 +16,9 @@ public class InventorySystem : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "WoodPickUp")
+        if (other.tag == "wood")
             wood++;
-        else if (other.tag == "StonePickUp")
+        else if (other.tag == "ore")
             ore++;
     }
 
