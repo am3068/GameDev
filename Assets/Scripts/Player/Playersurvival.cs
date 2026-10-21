@@ -96,4 +96,19 @@ public class PlayerSurvival : MonoBehaviour
 
         Debug.Log("You have died...");
     }
+    
+    void OnTriggerEnter(Collider other)
+    {
+        if (other.tag == "plant")
+        {
+            other.gameObject.SetActive(false);
+            RestoreHealth(50f);
+        }
+            
+        else if (other.tag == "food")
+        {
+            other.gameObject.SetActive(false);
+            RestoreHunger(50f);
+        }
+    }
 }

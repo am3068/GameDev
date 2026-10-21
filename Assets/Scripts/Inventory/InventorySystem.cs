@@ -17,9 +17,15 @@ public class InventorySystem : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         if (other.tag == "wood")
+        {
+            other.gameObject.SetActive(false);
             wood++;
+        }
         else if (other.tag == "ore")
+        {
+            other.gameObject.SetActive(false);
             ore++;
+        }
     }
 
     public int GetWood()
