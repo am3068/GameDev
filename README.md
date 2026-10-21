@@ -1,6 +1,6 @@
 # GameDev
 
-Unity game development project using Unity 2023.1.22f31.
+Unity game development project using Unity 2023.1.13f1.
 
 Repository:
 https://github.com/am3068/GameDev
