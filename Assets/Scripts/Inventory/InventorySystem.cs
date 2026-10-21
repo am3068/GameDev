@@ -1,40 +1,105 @@
-using System.Collections;
+
 using System.Collections.Generic;
 using UnityEngine;
 
 public class InventorySystem : MonoBehaviour
 {
-    private int wood;
-    private int ore;
+    private List<string> itemNames = new List<string>();
+    private List<int> itemCounts = new List<int>();
 
-    // Start is called before the first frame update
-    void Start()
+    private PlayerSurvival survival;
+
+    private void Awake()
     {
-        wood = 0;
-        ore = 0;
+        survival = GetComponent<PlayerSurvival>();
     }
 
-    void OnTriggerEnter(Collider other)
+    private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "wood")
+        string item = "";
+
+        if (other.CompareTag("wood"))
+            item = "Wood";
+        else if (other.CompareTag("food"))
+            item = "Food";
+        else if (other.CompareTag("plant"))
+            item = "Plant";
+        else if (other.CompareTag("ore"))
+            item = "Ore";
+
+        if (item == "")
+            return;
+
+        int slot = itemNames.IndexOf(item);
+
+        if (slot >= 0)
         {
-            other.gameObject.SetActive(false);
-            wood++;
+            // item exists so increase its count.
+            itemCounts[slot]++;
         }
-        else if (other.tag == "ore")
+        else
         {
-            other.gameObject.SetActive(false);
-            ore++;
+            // new item goes into next empty slot.
+            if (itemNames.Count >= 10)
+                return;
+
+            itemNames.Add(item);
+            itemCounts.Add(1);
+        }
+
+        other.gameObject.SetActive(false);
+    }
+
+    public void UseItemInSlot(int slot)
+    {
+        if (survival == null || survival.IsDead)
+            return;
+
+        if (slot < 0 || slot >= itemNames.Count)
+            return;
+
+        string item = itemNames[slot];
+
+        if (item == "Food")
+        {
+            if (survival.CurrentHunger >= survival.MaxHunger)
+                return;
+
+            survival.RestoreHunger(50f);
+        }
+        else if (item == "Plant")
+        {
+            if (survival.CurrentHealth >= survival.MaxHealth)
+                return;
+
+            survival.RestoreHealth(50f);
+        }
+        else
+        {
+            return;
+        }
+
+        itemCounts[slot]--;
+
+        if (itemCounts[slot] == 0)
+        {
+            itemNames.RemoveAt(slot);
+            itemCounts.RemoveAt(slot);
         }
     }
 
-    public int GetWood()
+    public int GetSlotCount()
     {
-        return wood;
+        return itemNames.Count;
     }
 
-    public int GetOre()
+    public string GetItemName(int slot)
     {
-        return ore;
+        return itemNames[slot];
+    }
+
+    public int GetItemCount(int slot)
+    {
+        return itemCounts[slot];
     }
 }

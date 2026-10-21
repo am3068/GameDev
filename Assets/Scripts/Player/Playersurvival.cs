@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerSurvival : MonoBehaviour
@@ -20,7 +18,7 @@ public class PlayerSurvival : MonoBehaviour
 
     private bool isDead;
 
-    // UI and enemy AI are able to read these values.
+    // Values available to the UI, inventory and enemy AI.
     public float CurrentHealth => currentHealth;
     public float MaxHealth => maxHealth;
     public float CurrentHunger => currentHunger;
@@ -38,16 +36,18 @@ public class PlayerSurvival : MonoBehaviour
         if (isDead)
             return;
 
-        // Hunger decreases over time.
+        // hunger decreases
         currentHunger = Mathf.Max(
             0f,
             currentHunger - hungerDrainPerSecond * Time.deltaTime
         );
 
-        // Starvation will damage the player when hunger reaches zero.
+        // starvation damages player once hunger = 0
         if (currentHunger <= 0f)
         {
-            TakeDamage(starvationDamagePerSecond * Time.deltaTime);
+            TakeDamage(
+                starvationDamagePerSecond * Time.deltaTime
+            );
         }
     }
 
@@ -56,7 +56,10 @@ public class PlayerSurvival : MonoBehaviour
         if (isDead || amount <= 0f)
             return;
 
-        currentHealth = Mathf.Max(0f, currentHealth - amount);
+        currentHealth = Mathf.Max(
+            0f,
+            currentHealth - amount
+        );
 
         if (currentHealth <= 0f)
         {
@@ -69,7 +72,10 @@ public class PlayerSurvival : MonoBehaviour
         if (isDead || amount <= 0f)
             return;
 
-        currentHealth = Mathf.Min(maxHealth, currentHealth + amount);
+        currentHealth = Mathf.Min(
+            maxHealth,
+            currentHealth + amount
+        );
     }
 
     public void RestoreHunger(float amount)
@@ -77,38 +83,27 @@ public class PlayerSurvival : MonoBehaviour
         if (isDead || amount <= 0f)
             return;
 
-        currentHunger = Mathf.Min(maxHunger, currentHunger + amount);
+        currentHunger = Mathf.Min(
+            maxHunger,
+            currentHunger + amount
+        );
     }
 
     private void Die()
     {
         isDead = true;
 
-        // Stops player movement.
-        PlayerController controller = GetComponent<PlayerController>();
+        // stop player movement once dead
+        PlayerController controller =
+            GetComponent<PlayerController>();
 
         if (controller != null)
             controller.enabled = false;
 
-        // Releases the mouse cursor.
+        // release mouse
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
         Debug.Log("You have died...");
-    }
-    
-    void OnTriggerEnter(Collider other)
-    {
-        if (other.tag == "plant")
-        {
-            other.gameObject.SetActive(false);
-            RestoreHealth(50f);
-        }
-            
-        else if (other.tag == "food")
-        {
-            other.gameObject.SetActive(false);
-            RestoreHunger(50f);
-        }
     }
 }
