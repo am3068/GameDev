@@ -204,7 +204,7 @@ Different features may be developed simultaneously by different group members be
 | Inventory system | [To be confirmed] |
 | Health and hunger | [To be confirmed] |
 | Crafting system | [To be confirmed] |
-| Creature AI and combat | [To be confirmed] |
+| Creature AI and combat | Oluwatolami Ojomo |
 | Integration and testing | All group members |
 
 The group will confirm individual responsibilities and collaborate during integration and testing.
