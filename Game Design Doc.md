@@ -78,7 +78,7 @@ The player can combine specific collected resources to craft useful items.
 
 Crafted items may restore survival needs more effectively or provide weapons and armour that help during combat.
 
-### 2.7 Creature AI --
+### 2.7 Creature AI - Required
 The game includes basic Enemy AI features which are listed below:
 - The enemies hover within the environment.
 - They detect, attack and cause damage to Player.
@@ -161,57 +161,8 @@ These interactions will be integrated with the group's inventory system.
 
 ---
 
-## 5. Additional Features
 
-The following features may be implemented if development time allows:
-
-- Main menu and pause menu.
-- Save and load functionality.
-- Additional creature types and behaviours.
-- More crafting recipes, weapons and armour.
-- Improved visual effects, animations and audio.
-
-These additions will be prioritised after the core prototype is functional.
-
----
-
-## 6. Development Plan and Team Responsibilities
-
-### 6.1 Development Order
-
-The planned development order is:
-
-1. Player movement and controls.
-2. Health, hunger and loss conditions.
-3. Resource collection and inventory.
-4. Item use and basic crafting.
-5. Environment and day/night cycle.
-6. Creature AI and combat.
-7. Survival-day tracking and win condition.
-8. Increasing difficulty and gameplay improvements.
-
-Different features may be developed simultaneously by different group members before being integrated into the shared project.
-
-### 6.2 Team Responsibilities
-
-| Feature | Responsible Member |
-|---|---|
-| Forest and desert biomes | Shuayb Mohamed |
-| Healing plants and crystal ores | Shuayb Mohamed |
-| Day/night cycle | Shuayb Mohamed |
-| Escape portal | Shuayb Mohamed |
-| Player movement and controls | [To be confirmed] |
-| Inventory system | [To be confirmed] |
-| Health and hunger | [To be confirmed] |
-| Crafting system | [To be confirmed] |
-| Creature AI and combat | Oluwatolami Ojomo |
-| Integration and testing | All group members |
-
-The group will confirm individual responsibilities and collaborate during integration and testing.
-
----
-
-## 7. Testing and Evaluation
+## 5. Testing and Evaluation
 
 The prototype will be tested to ensure that the main gameplay systems work correctly and operate together.
 
@@ -231,7 +182,7 @@ The group will evaluate whether the game is playable, the objective is clear and
 
 ---
 
-## 8. Design Review and Changes
+## 6. Design Review and Changes
 
 The group will regularly review the game design to ensure the prototype remains achievable within the available development time.
 
