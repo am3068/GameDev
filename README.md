@@ -77,6 +77,14 @@ My contributions include:
 - Implementing the day/night cycle
 - Creating the escape portal and its Day 4 unlock system
 
+### Enemy AI
+**Developer** Oluwatolami Ojomo
+
+My contributions include:
+- Creating Enemy prefab
+- Creating scripts relating to Enemy.
+
+  
 ### Other Group Members
 
 [Add each group member's name and what they contributed.]
