@@ -15,11 +15,11 @@ The player explores the environment, collects resources and tries to survive for
 
 ### Controls
 
-- Movement: [Add controls]
-- Camera: [Add controls]
+- Movement: wasd to move around
+- Camera: esc to release camera
 - Collect resources: [Add interaction key]
 - Inventory: [Add key if implemented]
-- Combat: [Add controls if implemented]
+- Combat: left click on the mouse to hit enemies.
 
 ## Game Features
 
