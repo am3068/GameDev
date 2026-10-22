@@ -12,6 +12,7 @@ This project is a 3D survival game developed in Unity. The player is placed in a
 ## How to Play
 
 The player explores the environment, collects resources and tries to survive for several in-game days. Once Day 4 is reached, the escape portal unlocks and the player can use it to complete the game.
+WebGL build link: https://ec23978.github.io/WebGL-Gameplay/V1/index.html
 
 ### Controls
 
