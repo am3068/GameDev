@@ -78,11 +78,13 @@ The player can combine specific collected resources to craft useful items.
 
 Crafted items may restore survival needs more effectively or provide weapons and armour that help during combat.
 
-### 2.7 Creature AI — Required
-
-The game includes AI-controlled creatures, some of which are aggressive.
-
-Hostile creatures will be able to detect, approach and attack the player, creating additional survival challenges.
+### 2.7 Creature AI --
+The game includes basic Enemy AI features which are listed below:
+- The enemies hover within the environment.
+- They detect, attack and cause damage to Player.
+- Their health status also reduces when they get attacked by the Player.
+- They fire projectiles towards the Player during encounter.
+- Enemies that are killed by the Player respawn the next day within the gameplay.
 
 ### 2.8 Combat System — Required
 
