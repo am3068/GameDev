@@ -1,400 +1,329 @@
+
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
 public class EnemyBehaviourAI : MonoBehaviour
 {
-    [Header("EnemyBullet Settings")]
+    [Header("Shooting")]
     public GameObject EnemyBullet;
     public float bulletMoveSpeed = 10f;
     public float bulletLifetime = 3f;
+    public float fireRate = 1f;
+    public float attackRange = 5f;
 
-    [Header("Movement Settings")]
-    public float moveSpeed = 3.5f;
-    public float rotationSpeed = 50f;
-    public float flightHeight = 2.0f;
-    private float desiredHeight;
-    private bool shouldMoveForward;
+    private float nextFireTime;
 
-    [Header("Evasive Attack Movement")]
-    public float evadeDistance = 2f;
-    public float evadeSpeed = 2f;
-    private bool isEvading = false;
-    private float evadeStartDistance;
-    private bool movingBackward = true;
+    [Header("Movement")]
+    public float moveSpeed = 5f;
+    public float patrolSpeed = 1.5f;
+    public float rotationSpeed = 120f;
 
-    [Header("Patrol & Avoidance")]
-    public float obstacleDetectionDistance = 2.0f;
-    public string obstacleTag = "Obstacle";
-    public string enemyTag = "Enemy";
-    private float wanderTimer = 0f;
-    private float wanderInterval = 3f;
-    private float currentTurnDirection = 0f;
-    private float stuckSpinTimer = 0f;
+    [Header("Patrol and Obstacles")]
+    public float wanderInterval = 1.5f;
+    public float obstacleDetectionDistance = 2f;
+    public LayerMask obstacleLayerMask;
 
-    [Header("Edge Detection")]
-    public string groundTag = "Ground";
+    private float wanderTimer;
+    private float currentTurnDirection;
+
+    [Header("Ground and Height")]
+    public LayerMask groundLayerMask;
+    public float flightHeight = 0.5f;
     public float edgeOffsetForward = 0.8f;
-    public float edgeRayLength = 4.0f;
+    public float edgeRayLength = 4f;
 
-    [Header("Detection Settings")]
+    [Header("Player Detection")]
     public string playerTag = "Player";
     public float detectionRadius = 10f;
-    public float fieldOfViewAngle = 90f;
-    public float attackRange = 5.0f;
+    public float losePlayerDistance = 14f;
+    public float fieldOfViewAngle = 130f;
 
-    [Header("Shooting Settings")]
-    public float fireRate = 1.0f;
-    private float nextFireTime = 0f;
-
-    // References & State
     private Transform playerTransform;
-    private bool playerDetected = false;
     private Rigidbody rb;
+    private bool playerDetected;
+    private float desiredHeight;
 
-    void Awake()
+    private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         rb.useGravity = false;
         rb.isKinematic = false;
+        rb.constraints = RigidbodyConstraints.FreezeRotation;
         rb.drag = 2f;
-        rb.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
     }
 
-    void Start()
+    private void Start()
     {
-        FindPlayerReference(); //finds and stores Player reference when game starts
-        wanderTimer = Random.Range(0f, wanderInterval); // sets intial wandering time
-        desiredHeight = rb.position.y; //sets initial levitating height
+        FindPlayerReference();
+        wanderTimer = Random.Range(0f, wanderInterval);
+        desiredHeight = rb.position.y;
     }
 
-    // updates enemy's detection, patrol, chase, and attack behaviour every frame.
-    void Update()
+    private void Update()
     {
-        shouldMoveForward = false;
         if (playerTransform == null)
-        {
-            
             FindPlayerReference();
-        }
 
         CheckForPlayer();
 
         if (playerDetected && playerTransform != null)
         {
-            float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);
+            Vector3 direction =
+                playerTransform.position - transform.position;
+            direction.y = 0f;
 
-            Vector3 targetDir = (playerTransform.position - transform.position).normalized;
-            targetDir.y = 0;
-            if (targetDir != Vector3.zero)
+            if (direction.sqrMagnitude > 0.01f)
             {
-                Quaternion targetRotation = Quaternion.LookRotation(targetDir);
-                transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed * 0.1f);
-            }
+                Quaternion targetRotation =
+                    Quaternion.LookRotation(direction);
 
-            if (distanceToPlayer <= attackRange || isEvading)
-            {
-                if (!isEvading)
-                {
-                    isEvading = true;
-                    movingBackward = true;
-                    evadeStartDistance = distanceToPlayer;
-                }
-
-                rb.velocity = new Vector3(0, rb.velocity.y, 0);
-
-                Shoot();
-            }
-            else
-            {
-                shouldMoveForward = true;
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation,
+                    targetRotation,
+                    rotationSpeed * Time.deltaTime
+                );
             }
         }
         else
         {
-            // player no longer detected
-            isEvading = false;
             PatrolAndAvoid();
         }
     }
 
-    //controls enemy physcial movement and leviation at fixed intervals
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        MaintainLevitation();
+        MaintainHeight();
 
-        if (isEvading)
+        if (!playerDetected || playerTransform == null)
         {
-            EvasiveMovement();
-        }
-        else if (shouldMoveForward)
-        {
-            MoveForward();
-        }
-        else
-        {
-            Vector3 newPosition = rb.position;
-            newPosition.y = desiredHeight;
+            // Patrol slowly when the player is not detected.
+            if (IsGroundAhead() && !IsPathBlocked())
+                MoveAtSpeed(patrolSpeed);
 
-            rb.MovePosition(newPosition);
-        }
-    }
-
-    //evasive movement for enemy's backward and forward motion during Player attack
-    void EvasiveMovement()
-    {
-        if (playerTransform == null)
             return;
+        }
 
-        float distanceToPlayer = Vector3.Distance(
-            rb.position,
+        float distance = Vector3.Distance(
+            transform.position,
             playerTransform.position
         );
 
-        float targetDistance;
+        // Chase and shoot only while the player is within the chase distance.
+        if (distance > losePlayerDistance)
+            return;
 
-        if (movingBackward)
+        if (distance > attackRange)
         {
-            targetDistance = evadeStartDistance + evadeDistance;
-        }
-        else
-        {
-            targetDistance = evadeStartDistance;
-        }
-        
-        //switch between moving backwards and forwards if target distances are reached
-        if (movingBackward && distanceToPlayer >= targetDistance)
-        {
-            movingBackward = false;
-        }
-        else if (!movingBackward && distanceToPlayer <= targetDistance)
-        {
-            movingBackward = true;
+            if (IsGroundAhead() && !IsPathBlocked())
+                MoveAtSpeed(moveSpeed);
         }
 
-        //determines if enemy should move backwards or forwards 
-        Vector3 moveDirection =
-            movingBackward ? -transform.forward : transform.forward;
-
-        Vector3 newPosition =
-            rb.position + moveDirection * evadeSpeed * Time.fixedDeltaTime;
-
-        newPosition.y = desiredHeight;
-
-        rb.MovePosition(newPosition);
+        Shoot();
     }
 
-    // maintaining levitation for enemy
-    void MaintainLevitation()
+    private void FindPlayerReference()
     {
-        // find the ground underneath enemy
-        Vector3 rayStart = rb.position + Vector3.up * 0.5f;
+        GameObject playerObject = GameObject.FindWithTag(playerTag);
 
-        RaycastHit hit;
-
-        if (Physics.Raycast(rayStart, Vector3.down, out hit, 25f))
-        {
-            if (hit.collider.CompareTag(groundTag))
-            {
-                // calculate height to be maintained
-                float targetY = hit.point.y + flightHeight;
-
-                // move towards tagreted height gradually
-                float newY = Mathf.Lerp(
-                    rb.position.y,
-                    targetY,
-                    Time.fixedDeltaTime * 5f
-                );
-
-                // Save the vertical target instead of moving immediately
-                desiredHeight = newY;
-            }
-        }
-
+        if (playerObject != null)
+            playerTransform = playerObject.transform;
     }
 
-    //enemy forward movement method
-    void MoveForward()
+    private void CheckForPlayer()
     {
-        Vector3 forwardMovement =
-        transform.forward * moveSpeed * Time.fixedDeltaTime;
-
-        Vector3 newPosition = rb.position + forwardMovement;
-
-        
-        newPosition.y = desiredHeight; //maintains enemy's levitating height
-
-        rb.MovePosition(newPosition); // moves enemy to new position
-    }
-
-    // looks for GameObject tagged as Player and stores its Transform reference
-    void FindPlayerReference()
-    {
-        GameObject playerObj = GameObject.FindWithTag(playerTag);
-        if (playerObj != null)
-        {
-            playerTransform = playerObj.transform;
-        }
-    }
-
-    // checking for Player 
-    void CheckForPlayer()
-    {   // detecting for Player movement
-        if (playerTransform == null) 
+        if (playerTransform == null)
         {
             playerDetected = false;
             return;
         }
 
-        Vector3 directionToPlayer =
+        float distance = Vector3.Distance(
+            transform.position,
+            playerTransform.position
+        );
+
+        if (playerDetected && distance > losePlayerDistance)
+        {
+            playerDetected = false;
+            return;
+        }
+
+        if (!playerDetected && distance > detectionRadius)
+            return;
+
+        Vector3 direction =
             playerTransform.position - transform.position;
+        direction.y = 0f;
 
-        float distanceToPlayer = directionToPlayer.magnitude;
+        float angle = Vector3.Angle(transform.forward, direction);
 
-        // checks if Player is within detection radius and calculates
-        // viewing between enemy's forward direction and Player
-        if (distanceToPlayer <= detectionRadius)
+        if (angle > fieldOfViewAngle * 0.5f)
         {
-            float currentFieldOfView = fieldOfViewAngle;
-
-            if (distanceToPlayer <= detectionRadius * 0.5f)
-            {
-                currentFieldOfView = 360f;
-            }
-
-            Vector3 flatForward = transform.forward;
-            flatForward.y = 0;
-
-            Vector3 flatDirToPlayer = directionToPlayer;
-            flatDirToPlayer.y = 0;
-
-            float angle = Vector3.Angle(
-                flatForward,
-                flatDirToPlayer
-            );
-
-            // checking if player is within enemy's field of view
-            if (angle <= currentFieldOfView * 0.5f)
-            { 
-                Vector3 rayOrigin = 
-                    transform.position + transform.forward * 0.5f; //sets origin just before enemy's sight
-
-                // calculates the distance and direction between player's postion and enemy's ray cast
-                Vector3 rayDirection =
-                    playerTransform.position - rayOrigin; 
-                float rayDistance = rayDirection.magnitude;
-
-                RaycastHit hit;
-                //checks that line path between Player and enemy is clear
-                if (Physics.Raycast(rayOrigin, rayDirection.normalized, out hit, rayDistance))
-                {   
-                    //confirms player detection if ray cast hits Player
-                    if (hit.collider.CompareTag(playerTag))
-                    {
-                        playerDetected = true;
-                        stuckSpinTimer = 0f;
-                        return;
-                    }
-                }
-            }
+            playerDetected = false;
+            return;
         }
 
-        playerDetected = false;
-    }
+        Vector3 origin = transform.position + Vector3.up * 0.5f;
+        Vector3 target = playerTransform.position;
+        Vector3 rayDirection = target - origin;
 
-    // patrol for Player and avoid colliding with other enemies and obstacles
-    void PatrolAndAvoid()
-    {
-        RaycastHit hit;
-        Vector3 rayOrigin = transform.position + (transform.forward * 1.0f) + (Vector3.up * 0.5f);// determining where the Raycast starts relative to enemy
-
-        //if enemy Raycast hit obstacle or another enemy then path is blocked
-        bool pathBlocked = false;
-        if (Physics.Raycast(rayOrigin, transform.forward, out hit, obstacleDetectionDistance))
+        if (Physics.Raycast(
+            origin,
+            rayDirection.normalized,
+            out RaycastHit hit,
+            rayDirection.magnitude))
         {
-            if (hit.collider.CompareTag(obstacleTag) || hit.collider.CompareTag(enemyTag))
-            {
-                pathBlocked = true;
-            }
-        }
-
-        //if path is blocked, rotate enemy to a new direction
-        if (pathBlocked)
-        {
-            stuckSpinTimer += Time.deltaTime;
-            //if enemy has been stuck for over 1.5 secs, then rotate the enemy 90 degrees y axis and reset stuckSpinTimer
-            if (stuckSpinTimer > 1.5f)
-            {
-                stuckSpinTimer = 0f;
-                transform.Rotate(0, 90f, 0);
-            }
-            else
-            {
-                transform.Rotate(0, rotationSpeed * Time.deltaTime, 0); // else rotate gradually while searching for new path
-            }
+            playerDetected =
+                hit.collider.CompareTag(playerTag) ||
+                hit.collider.transform.root.CompareTag(playerTag);
         }
         else
         {
-            stuckSpinTimer = 0f;
-            shouldMoveForward = true; // move if not stuck
-
-            wanderTimer += Time.deltaTime;
-
-            //if enemy has been wandering longer than wanderInteval, change rotation direction
-            if (wanderTimer >= wanderInterval)
-            {
-                wanderTimer = 0f;
-                currentTurnDirection = Random.Range(-1f, 1f);
-                wanderInterval = Random.Range(2f, 5f);
-            }
-
-            transform.Rotate(0, currentTurnDirection * (rotationSpeed * 0.3f) * Time.deltaTime, 0);
+            playerDetected = false;
         }
     }
 
-    //fire projectiles towards player at specified time intervals 
-    void Shoot()
+    private void PatrolAndAvoid()
     {
-        if (Time.time >= nextFireTime)
-        {   
-            nextFireTime = Time.time + fireRate; //fire enemy at the given rate from time to time
+        wanderTimer += Time.deltaTime;
 
-            if (EnemyBullet != null)
-            {   //spawn projectiles and shoot from enemy's given direction
-                Vector3 spawnPos = transform.position + transform.forward * 1.0f;
-                Quaternion lookRotation = Quaternion.LookRotation((playerTransform.position - spawnPos).normalized);
-                GameObject spawnedBullet = Instantiate(EnemyBullet, spawnPos, lookRotation);
+        if (wanderTimer >= wanderInterval)
+        {
+            wanderTimer = 0f;
+            currentTurnDirection = Random.Range(-1f, 1f);
+            wanderInterval = Random.Range(0.8f, 2f);
+        }
 
-                EnemyBullet bulletScript = spawnedBullet.GetComponent<EnemyBullet>(); //getting the bullet script
-                if (bulletScript != null)
-                {
-                    bulletScript.Initialize(bulletMoveSpeed, bulletLifetime); // if bullet script exists, initialise its speed and lifetime
-                }
-            }
+        if (!IsGroundAhead() || IsPathBlocked())
+        {
+            currentTurnDirection = 1f;
+            wanderTimer = 0f;
+        }
+
+        transform.Rotate(
+            0f,
+            currentTurnDirection * rotationSpeed * 0.5f *
+            Time.deltaTime,
+            0f
+        );
+    }
+
+    private void MoveAtSpeed(float speed)
+    {
+        Vector3 movement =
+            transform.forward * speed * Time.fixedDeltaTime;
+
+        Vector3 newPosition = rb.position + movement;
+        newPosition.y = desiredHeight;
+
+        rb.MovePosition(newPosition);
+    }
+
+    private void MaintainHeight()
+    {
+        Vector3 rayStart = rb.position + Vector3.up * 0.5f;
+
+        if (Physics.Raycast(
+            rayStart,
+            Vector3.down,
+            out RaycastHit hit,
+            25f,
+            groundLayerMask))
+        {
+            desiredHeight = Mathf.Lerp(
+                desiredHeight,
+                hit.point.y + flightHeight,
+                Time.fixedDeltaTime * 5f
+            );
+
+            Vector3 position = rb.position;
+            position.y = desiredHeight;
+            rb.MovePosition(position);
         }
     }
 
-    // displays enemy's detection range, attack range, field of view, and obstacle detection rays in Scene view
+    private bool IsGroundAhead()
+    {
+        Vector3 rayOrigin =
+            rb.position +
+            transform.forward * edgeOffsetForward +
+            Vector3.up * 0.5f;
+
+        return Physics.Raycast(
+            rayOrigin,
+            Vector3.down,
+            edgeRayLength,
+            groundLayerMask
+        );
+    }
+
+    private bool IsPathBlocked()
+    {
+        Vector3 origin = rb.position + Vector3.up * 0.5f;
+
+        return Physics.Raycast(
+            origin,
+            transform.forward,
+            obstacleDetectionDistance,
+            obstacleLayerMask
+        );
+    }
+
+    private void Shoot()
+    {
+        if (Time.time < nextFireTime || EnemyBullet == null)
+            return;
+
+        nextFireTime = Time.time + fireRate;
+
+        // Aim at the player's actual position, not above their head.
+        Vector3 spawnPosition =
+            transform.position + transform.forward * 0.8f;
+
+        Vector3 targetPosition = playerTransform.position;
+        Vector3 direction = targetPosition - spawnPosition;
+
+        if (direction.sqrMagnitude < 0.01f)
+            return;
+
+        GameObject bullet = Instantiate(
+            EnemyBullet,
+            spawnPosition,
+            Quaternion.LookRotation(direction)
+        );
+
+        EnemyBullet bulletScript =
+            bullet.GetComponent<EnemyBullet>();
+
+        if (bulletScript != null)
+            bulletScript.Initialize(bulletMoveSpeed, bulletLifetime);
+    }
+
     private void OnDrawGizmosSelected()
     {
-        Gizmos.color = Color.magenta;
-        Vector3 edgeRayOrigin = transform.position + (transform.forward * edgeOffsetForward) + Vector3.up * 0.5f;
-        Gizmos.DrawRay(edgeRayOrigin, Vector3.down * edgeRayLength);
-
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, detectionRadius);
+
+        Gizmos.color = Color.magenta;
+        Gizmos.DrawWireSphere(transform.position, losePlayerDistance);
 
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, attackRange);
 
-        Gizmos.color = Color.blue;
-        Vector3 leftRay = Quaternion.Euler(0, -fieldOfViewAngle * 0.5f, 0) * transform.forward;
-        Vector3 rightRay = Quaternion.Euler(0, fieldOfViewAngle * 0.5f, 0) * transform.forward;
+        Vector3 leftRay = Quaternion.Euler(
+            0f, -fieldOfViewAngle * 0.5f, 0f
+        ) * transform.forward;
 
-        Gizmos.DrawRay(transform.position + Vector3.up * 0.5f, leftRay * detectionRadius);
-        Gizmos.DrawRay(transform.position + Vector3.up * 0.5f, rightRay * detectionRadius);
+        Vector3 rightRay = Quaternion.Euler(
+            0f, fieldOfViewAngle * 0.5f, 0f
+        ) * transform.forward;
 
         Gizmos.color = Color.cyan;
-        Vector3 forwardRayOrigin = transform.position + (transform.forward * 1.0f) + (Vector3.up * 0.5f);
-        Gizmos.DrawRay(forwardRayOrigin, transform.forward * obstacleDetectionDistance);
+        Gizmos.DrawRay(
+            transform.position, leftRay * detectionRadius
+        );
+        Gizmos.DrawRay(
+            transform.position, rightRay * detectionRadius
+        );
     }
 }

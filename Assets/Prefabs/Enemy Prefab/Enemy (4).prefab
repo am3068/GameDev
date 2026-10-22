@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 7658797262883291856}
   - component: {fileID: 8590822635567926008}
   - component: {fileID: 7429466720728262831}
-  - component: {fileID: 2724462359106718943}
+  - component: {fileID: 6961852722703571199}
+  - component: {fileID: 5447259612149027801}
   m_Layer: 0
   m_Name: Enemy (4)
   m_TagString: Enemy
@@ -30,8 +31,8 @@ Transform:
   m_GameObject: {fileID: 2270153738499545236}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 70, y: 8, z: 50}
-  m_LocalScale: {x: 0.45, y: 0.45, z: 0.45}
+  m_LocalPosition: {x: 70, y: 1, z: 50}
+  m_LocalScale: {x: 0.65, y: 0.65, z: 0.65}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -136,7 +137,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &2724462359106718943
+--- !u!114 &6961852722703571199
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -145,25 +146,43 @@ MonoBehaviour:
   m_GameObject: {fileID: 2270153738499545236}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7135bf123f32d486ba6b50439b534a25, type: 3}
+  m_Script: {fileID: 11500000, guid: 2a2981766fd1d394fa51944152fb3187, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   EnemyBullet: {fileID: 1109005653167924150, guid: a2b8abe31de414f789aafe3ddc971a70, type: 3}
   bulletMoveSpeed: 10
   bulletLifetime: 3
+  fireRate: 1
+  attackRange: 5
   moveSpeed: 3.5
-  rotationSpeed: 120
-  flightHeight: 2
-  evadeDistance: 2
-  evadeSpeed: 2
+  patrolSpeed: 1.5
+  rotationSpeed: 50
+  wanderInterval: 1.5
   obstacleDetectionDistance: 2
-  obstacleTag: Obstacle
-  enemyTag: Enemy
-  groundTag: Ground
+  obstacleLayerMask:
+    serializedVersion: 2
+    m_Bits: 320
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
+  flightHeight: 2
   edgeOffsetForward: 0.8
   edgeRayLength: 4
   playerTag: Player
   detectionRadius: 10
+  losePlayerDistance: 14
   fieldOfViewAngle: 90
-  attackRange: 3
-  fireRate: 1
+--- !u!114 &5447259612149027801
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2270153738499545236}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b71d449583d24fc4fb895bfd4f72b42d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  currentHealth: 0

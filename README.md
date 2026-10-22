@@ -40,6 +40,17 @@ An escape portal has been created as the main objective of the game. The portal 
 Healing plants have been added to the forest and crystal ores have been added to the desert.
 These resources are intended to be used as part of the game's collection and survival mechanics.
 
+### Enemy
+
+- The Enemies for the prototype use Capsule Colliders and Rigidbody components to interact with the environment easily
+  and carry out implementations such as avoiding being stuck or hitting other enemies and environmental assets.
+- They also contain RayCastHit for Player and Obstacle detection.
+- They also have enemy health and can also respawn when they are attacked by Player.
+- They fire projectiles towards the PLayer when they fall within their radius detection.
+- They are levitating capsule models that hover around within the gameplay.
+- They can appear anywhere within the game.
+- Player can hide behind desert rocks or move farther away from them to avoid getting hit.
+
 [Explain how resource collection works once it has been integrated with the player's inventory.]
 
 ### Enemy
@@ -93,6 +104,8 @@ My contributions include:
 - Connected Inventory, Healthbar and Hungerbar to UI
 - Adding rocks and walls 
 - Adding collectables healing plants, food , wood and ore
+  
+### Other Group Members
 
 
 ## Testing
