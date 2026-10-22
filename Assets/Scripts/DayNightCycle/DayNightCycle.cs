@@ -35,6 +35,13 @@ public class DayNightCycle : MonoBehaviour
             timeOfDay -= 1f;
             currentDay++;
             Debug.Log("Day " + currentDay);
+
+            EnemyHealth[] enemies = FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None);
+
+            foreach (EnemyHealth enemy in enemies)
+            {
+                enemy.Respawn();
+            }
         }
 
         UpdateSun();

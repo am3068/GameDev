@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
@@ -24,7 +25,8 @@ public class EnemyBehaviourAI : MonoBehaviour
 
     [Header("Patrol & Avoidance")]
     public float obstacleDetectionDistance = 2.0f;
-    public string obstacleTag = "Obstacle";
+    public LayerMask obstacleLayerMask;
+    //public string obstacleTag = "Obstacle";
     public string enemyTag = "Enemy";
     private float wanderTimer = 0f;
     private float wanderInterval = 3f;
@@ -32,21 +34,21 @@ public class EnemyBehaviourAI : MonoBehaviour
     private float stuckSpinTimer = 0f;
 
     [Header("Edge Detection")]
-    public string groundTag = "Ground";
+    //public string groundTag = "Ground";
+    public LayerMask groundLayerMask;
     public float edgeOffsetForward = 0.8f;
     public float edgeRayLength = 4.0f;
 
     [Header("Detection Settings")]
     public string playerTag = "Player";
     public float detectionRadius = 10f;
-    public float fieldOfViewAngle = 90f;
+    public float fieldOfViewAngle = 130f;
     public float attackRange = 5.0f;
 
     [Header("Shooting Settings")]
     public float fireRate = 1.0f;
     private float nextFireTime = 0f;
 
-    // References & State
     private Transform playerTransform;
     private bool playerDetected = false;
     private Rigidbody rb;
@@ -78,6 +80,7 @@ public class EnemyBehaviourAI : MonoBehaviour
         }
 
         CheckForPlayer();
+        
 
         if (playerDetected && playerTransform != null)
         {
@@ -191,23 +194,13 @@ public class EnemyBehaviourAI : MonoBehaviour
 
         RaycastHit hit;
 
-        if (Physics.Raycast(rayStart, Vector3.down, out hit, 25f))
+        if (Physics.Raycast(rayStart, Vector3.down, out hit, 25f, groundLayerMask))
         {
-            if (hit.collider.CompareTag(groundTag))
-            {
-                // calculate height to be maintained
                 float targetY = hit.point.y + flightHeight;
 
-                // move towards tagreted height gradually
-                float newY = Mathf.Lerp(
-                    rb.position.y,
-                    targetY,
-                    Time.fixedDeltaTime * 5f
-                );
+                float newY = Mathf.Lerp(rb.position.y, targetY, Time.fixedDeltaTime * 5f);
 
-                // Save the vertical target instead of moving immediately
                 desiredHeight = newY;
-            }
         }
 
     }
@@ -220,22 +213,29 @@ public class EnemyBehaviourAI : MonoBehaviour
 
         Vector3 newPosition = rb.position + forwardMovement;
 
-        
+        if (!IsGroundAhead(newPosition))
+        {
+            return;
+        }
         newPosition.y = desiredHeight; //maintains enemy's levitating height
 
         rb.MovePosition(newPosition); // moves enemy to new position
     }
 
-    // looks for GameObject tagged as Player and stores its Transform reference
+    //looks for GameObject tagged as Player and stores its Transform reference
+
     void FindPlayerReference()
     {
         GameObject playerObj = GameObject.FindWithTag(playerTag);
+
         if (playerObj != null)
         {
             playerTransform = playerObj.transform;
-        }
-    }
 
+            //Debug.Log(gameObject.name + " FOUND THE PLAYER!");
+        }
+
+    }
     // checking for Player 
     void CheckForPlayer()
     {   // detecting for Player movement
@@ -245,10 +245,10 @@ public class EnemyBehaviourAI : MonoBehaviour
             return;
         }
 
-        Vector3 directionToPlayer =
-            playerTransform.position - transform.position;
+        Vector3 directionToPlayer = playerTransform.position - transform.position;
 
-        float distanceToPlayer = directionToPlayer.magnitude;
+        float distanceToPlayer = Vector3.Distance(transform.position, playerTransform.position);//directionToPlayer.magnitude;
+        playerDetected = distanceToPlayer <= detectionRadius;
 
         // checks if Player is within detection radius and calculates
         // viewing between enemy's forward direction and Player
@@ -275,20 +275,19 @@ public class EnemyBehaviourAI : MonoBehaviour
             // checking if player is within enemy's field of view
             if (angle <= currentFieldOfView * 0.5f)
             { 
-                Vector3 rayOrigin = 
-                    transform.position + transform.forward * 0.5f; //sets origin just before enemy's sight
+                Vector3 rayOrigin = transform.position + Vector3.up * 0.5f; //sets origin just before enemy's sight
+                Vector3 playerTarget = playerTransform.position + Vector3.up * 1.0f;
 
                 // calculates the distance and direction between player's postion and enemy's ray cast
-                Vector3 rayDirection =
-                    playerTransform.position - rayOrigin; 
+                Vector3 rayDirection = playerTarget - rayOrigin; 
                 float rayDistance = rayDirection.magnitude;
 
                 RaycastHit hit;
                 //checks that line path between Player and enemy is clear
                 if (Physics.Raycast(rayOrigin, rayDirection.normalized, out hit, rayDistance))
-                {   
+                {
                     //confirms player detection if ray cast hits Player
-                    if (hit.collider.CompareTag(playerTag))
+                    if (hit.collider.CompareTag(playerTag) || hit.collider.transform.root.CompareTag(playerTag))
                     {
                         playerDetected = true;
                         stuckSpinTimer = 0f;
@@ -300,6 +299,12 @@ public class EnemyBehaviourAI : MonoBehaviour
 
         playerDetected = false;
     }
+    bool IsGroundAhead(Vector3 position)
+    {
+        Vector3 rayOrigin = position + transform.forward * edgeOffsetForward + Vector3.up * 0.5f;
+
+        return Physics.Raycast(rayOrigin, Vector3.down, edgeRayLength, groundLayerMask);
+    }
 
     // patrol for Player and avoid colliding with other enemies and obstacles
     void PatrolAndAvoid()
@@ -309,12 +314,20 @@ public class EnemyBehaviourAI : MonoBehaviour
 
         //if enemy Raycast hit obstacle or another enemy then path is blocked
         bool pathBlocked = false;
-        if (Physics.Raycast(rayOrigin, transform.forward, out hit, obstacleDetectionDistance))
+
+        if (!IsGroundAhead(transform.position))
         {
-            if (hit.collider.CompareTag(obstacleTag) || hit.collider.CompareTag(enemyTag))
-            {
+            transform.Rotate(0f, rotationSpeed * Time.deltaTime, 0f);
+
+            shouldMoveForward = false;
+
+            return;
+        }
+
+        if (Physics.Raycast(rayOrigin, transform.forward, out hit, obstacleDetectionDistance, obstacleLayerMask))
+        {
+            
                 pathBlocked = true;
-            }
         }
 
         //if path is blocked, rotate enemy to a new direction

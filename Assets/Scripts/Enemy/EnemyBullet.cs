@@ -26,17 +26,29 @@ public class EnemyBullet : MonoBehaviour
     }
 
     //handles bullet collison
+
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        // Check whether the projectile hit the player
+        PlayerSurvival playerSurvival =
+            other.GetComponentInParent<PlayerSurvival>();
+
+        if (playerSurvival != null)
         {
-            //destroy both Player and bullet upon collision
-            Destroy(other.gameObject);
+            // Reduce player health by 10 points
+            playerSurvival.TakeDamage(10f);
+
+            Debug.Log("PLAYER HIT! 10 DAMAGE DEALT!");
+
+            // Destroy bullet after hitting player
             Destroy(gameObject);
+            return;
         }
-        else if (other.CompareTag("Obstacle") || other.CompareTag("Ground") || other.CompareTag("Enemy"))
+
+        // Destroy bullet if it hits an obstacle or the ground
+        if (other.gameObject.layer == LayerMask.NameToLayer("Obstacle") ||
+            other.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
-            //destroy bullet when it hits other enemies, Obstacles or Ground
             Destroy(gameObject);
         }
     }

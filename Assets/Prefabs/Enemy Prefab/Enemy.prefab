@@ -13,7 +13,8 @@ GameObject:
   - component: {fileID: 3776484844264148789}
   - component: {fileID: 1371138433863926246}
   - component: {fileID: 7702669892666941562}
-  - component: {fileID: 6896422720917487244}
+  - component: {fileID: 7147472001495993996}
+  - component: {fileID: 7580117437538868617}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -30,8 +31,8 @@ Transform:
   m_GameObject: {fileID: 9165240852180130840}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 80, y: 8, z: 50}
-  m_LocalScale: {x: 0.45, y: 0.45, z: 0.45}
+  m_LocalPosition: {x: 5, y: 2, z: 5}
+  m_LocalScale: {x: 0.65, y: 0.65, z: 0.65}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -136,7 +137,7 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &6896422720917487244
+--- !u!114 &7147472001495993996
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -145,25 +146,43 @@ MonoBehaviour:
   m_GameObject: {fileID: 9165240852180130840}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7135bf123f32d486ba6b50439b534a25, type: 3}
+  m_Script: {fileID: 11500000, guid: 2a2981766fd1d394fa51944152fb3187, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   EnemyBullet: {fileID: 1109005653167924150, guid: a2b8abe31de414f789aafe3ddc971a70, type: 3}
   bulletMoveSpeed: 10
   bulletLifetime: 3
   moveSpeed: 3.5
-  rotationSpeed: 120
+  rotationSpeed: 50
   flightHeight: 2
   evadeDistance: 2
   evadeSpeed: 2
   obstacleDetectionDistance: 2
-  obstacleTag: Obstacle
+  obstacleLayerMask:
+    serializedVersion: 2
+    m_Bits: 320
   enemyTag: Enemy
-  groundTag: Ground
+  groundLayerMask:
+    serializedVersion: 2
+    m_Bits: 128
   edgeOffsetForward: 0.8
   edgeRayLength: 4
   playerTag: Player
   detectionRadius: 10
   fieldOfViewAngle: 90
-  attackRange: 3
+  attackRange: 5
   fireRate: 1
+--- !u!114 &7580117437538868617
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9165240852180130840}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b71d449583d24fc4fb895bfd4f72b42d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  currentHealth: 0
