@@ -1,6 +1,6 @@
 # GameDev
 
-Unity game development project using Unity 2023.1.13f1.
+Unity game development project using Unity 2023.1.22f1.
 
 Repository:
 https://github.com/am3068/GameDev
@@ -17,9 +17,8 @@ The player explores the environment, collects resources and tries to survive for
 
 - Movement: wasd to move around
 - Camera: esc to release camera
-- Collect resources: [Add interaction key]
-- Inventory: [Add key if implemented]
-- Combat: left click on the mouse to hit enemies.
+- Inventory: 0-9 in order to select an item slot
+- Combat: left click on the mouse to hit enemies
 
 ## Game Features
 
@@ -51,61 +50,13 @@ These resources are intended to be used as part of the game's collection and sur
 - They can appear anywhere within the game.
 - Player can hide behind desert rocks or move farther away from them to avoid getting hit.
 
-[Explain how resource collection works once it has been integrated with the player's inventory.]
 
-### Enemy
 
-- The Enemies for the prototype use Capsule Colliders and Rigidbody components to interact with the environment easily
-  and carry out implementations such as avoiding being stuck or hitting other enemies and environmental assets.
-- They also contain RayCastHit for Player and Obstacle detection.
-- They also have enemy health and can also respawn when they are attacked by Player.
-- They fire projectiles towards the PLayer when they fall within their radius detection.
-- They are levitating capsule models that hover around within the gameplay.
-- They can appear anywhere within the game.
-- Player can hide behind desert rocks or move farther away from them to avoid getting hit.
-
-### Other Gameplay Features
-
-[Add the other features completed by your teammates, such as player movement, inventory or health.]
 
 ## Development
 The game is being developed using Unity and C#. GitHub is used to manage the project and allow group members to work on different features. The environment is built using Unity GameObjects, prefabs, materials and colliders. C# scripts are used for features such as the day/night cycle and escape portal.
 
-## Team Contributions
 
-Different parts of the game have been divided between group members.
-
-### Environment and Escape Portal
-
-**Developer:** Shuayb Mohamed
-
-My contributions include:
-
-- Creating the forest and desert biomes
-- Adding trees, bushes and rocks
-- Creating the pathway between the biomes
-- Adding healing plants and crystal ores
-- Implementing the day/night cycle
-- Creating the escape portal and its Day 4 unlock system
-
-### Enemy AI
-**Developer** Oluwatolami Ojomo
-
-My contributions include:
-- Creating Enemy prefab
-- Creating scripts relating to Enemy.
-
-### Player
-**Developer** Abdirahim Mao
-
-- Implemented player movement, combat, pickup, camera and core player systems.
-- Helped with scripts relating to Inventory (Adding consumables)
-- Helped with scripts relating to Enemy (Red flashes when hit, patrolling)
-- Connected Inventory, Healthbar and Hungerbar to UI
-- Adding rocks and walls 
-- Adding collectables healing plants, food , wood and ore
-  
-### Other Group Members
 
 
 ## Testing
@@ -118,7 +69,6 @@ The following features need to be checked as part of testing the complete game:
 - Resource collection
 - Interaction between the different gameplay systems
 
-[Add the results of tests that have actually been completed.]
 
 ## Running the Game
 
@@ -128,26 +78,12 @@ The following features need to be checked as part of testing the complete game:
 4. Open the main gameplay scene.
 5. Press Play to run the game.
 
-## WebGL Build
-
-[Add the link to the playable game.]
-
-
-## Gameplay Video
-
-[Add the link to the gameplay demonstration.]
 
 ## AI Assistance and External Resources
 
-[Describe any AI assistance or third-party technical resources used, including which parts they supported and who is responsible for the resulting work, in line with the coursework requirements.]
+ChatGPT was used as a learning and development support tool to help explain Unity concepts, C# programming and gameplay implementation approaches.
 
-## Known Issues
 
-[Add any known bugs or incomplete features.]
-
-## Design Document
-
-[Add the link to the group's design document.]
 
 ## Version Control
 
