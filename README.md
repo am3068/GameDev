@@ -15,8 +15,13 @@ The player explores the environment, collects resources and tries to survive for
 
 ### Controls
 
-- Movement: wasd to move around
-- Camera: esc to release camera
+- Forward: W
+- Backward: S
+- Left: A
+- Right: S
+- Jump: Space bar
+- Sprint: Left Shift
+- Camera: Mouse movement
 - Inventory: 0-9 in order to select an item slot
 - Combat: left click on the mouse to hit enemies
 
