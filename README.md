@@ -84,9 +84,16 @@ My contributions include:
 - Creating Enemy prefab
 - Creating scripts relating to Enemy.
 
-### Other Group Members
+### Player
+**Developer** Abdirahim Mao
 
-[Add each group member's name and what they contributed.]
+- Implemented player movement, combat, pickup, camera and core player systems.
+- Helped with scripts relating to Inventory (Adding consumables)
+- Helped with scripts relating to Enemy (Red flashes when hit, patrolling)
+- Connected Inventory, Healthbar and Hungerbar to UI
+- Adding rocks and walls 
+- Adding collectables healing plants, food , wood and ore
+
 
 ## Testing
 
