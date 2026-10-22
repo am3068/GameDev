@@ -1,51 +1,40 @@
+
 using UnityEngine;
 
 public class EnemyBullet : MonoBehaviour
 {
     private float bulletMoveSpeed = 10f;
     private float bulletLifetime = 3f;
+    private Vector3 moveDirection;
 
-    // called by the enemy script upon instantiation to set speed and die time
     public void Initialize(float speed, float lifetime)
     {
         bulletMoveSpeed = speed;
         bulletLifetime = lifetime;
-        Destroy(gameObject, bulletLifetime); // auto-destroy bullets after set time if it misses
+        moveDirection = transform.forward;
+
+        Destroy(gameObject, bulletLifetime);
     }
 
-    //updates bullet motion
-    void Update()
+    private void Update()
     {
-        BulletMove();
+        transform.position +=
+            moveDirection * bulletMoveSpeed * Time.deltaTime;
     }
-
-    //bullet motion method
-    private void BulletMove()
-    {
-        transform.Translate(Vector3.forward * bulletMoveSpeed * Time.deltaTime);
-    }
-
-    //handles bullet collison
 
     private void OnTriggerEnter(Collider other)
     {
-        // Check whether the projectile hit the player
-        PlayerSurvival playerSurvival =
+        PlayerSurvival survival =
             other.GetComponentInParent<PlayerSurvival>();
 
-        if (playerSurvival != null)
+        if (survival != null)
         {
-            // Reduce player health by 10 points
-            playerSurvival.TakeDamage(10f);
-
+            survival.TakeDamage(10f);
             Debug.Log("PLAYER HIT! 10 DAMAGE DEALT!");
-
-            // Destroy bullet after hitting player
             Destroy(gameObject);
             return;
         }
 
-        // Destroy bullet if it hits an obstacle or the ground
         if (other.gameObject.layer == LayerMask.NameToLayer("Obstacle") ||
             other.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
