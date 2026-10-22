@@ -42,9 +42,20 @@ These resources are intended to be used as part of the game's collection and sur
 
 [Explain how resource collection works once it has been integrated with the player's inventory.]
 
+### Enemy
+
+- The Enemies for the prototype use Capsule Colliders and Rigidbody components to interact with the environment easily
+  and carry out implementations such as avoiding being stuck or hitting other enemies and environmental assets.
+- They also contain RayCastHit for Player and Obstacle detection.
+- They also have enemy health and can also respawn when they are attacked by Player.
+- They fire projectiles towards the PLayer when they fall within their radius detection.
+- They are levitating capsule models that hover around within the gameplay.
+- They can appear anywhere within the game.
+- Player can hide behind desert rocks or move farther away from them to avoid getting hit.
+
 ### Other Gameplay Features
 
-[Add the other features completed by your teammates, such as player movement, inventory, enemies or health.]
+[Add the other features completed by your teammates, such as player movement, inventory or health.]
 
 ## Development
 The game is being developed using Unity and C#. GitHub is used to manage the project and allow group members to work on different features. The environment is built using Unity GameObjects, prefabs, materials and colliders. C# scripts are used for features such as the day/night cycle and escape portal.
@@ -65,6 +76,13 @@ My contributions include:
 - Adding healing plants and crystal ores
 - Implementing the day/night cycle
 - Creating the escape portal and its Day 4 unlock system
+
+### Enemy AI
+**Developer** Oluwatolami Ojomo
+
+My contributions include:
+- Creating Enemy prefab
+- Creating scripts relating to Enemy.
 
 ### Other Group Members
 
@@ -93,6 +111,7 @@ The following features need to be checked as part of testing the complete game:
 ## WebGL Build
 
 [Add the link to the playable game.]
+
 
 ## Gameplay Video
 
