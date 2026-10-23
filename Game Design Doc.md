@@ -39,7 +39,7 @@ The game contains two visually different environments:
 - **Forest:** Green terrain, trees, bushes and healing plants.
 - **Desert:** Sandy terrain, rocks and crystal ores.
 
-Both biomes are connected by a pathway, allowing players to explore them without changing scenes.
+Both biomes are connected by a pathway and a few rocks to jump over, allowing players to explore them without changing scenes.
 
 A day/night cycle changes the environment's lighting and tracks the number of in-game days.
 
@@ -131,9 +131,9 @@ The forest and desert are created within the same Unity scene using GameObjects,
 
 The forest contains trees, bushes and healing plants, while the desert contains rocks and crystal ores.
 
-A pathway connects the biomes to encourage exploration.
+A pathway connects the biomes to encourage exploration. Obstacles to encourage players to learn the movement mechanics.
 
-The different resources are intended to give each biome a distinct gameplay purpose.
+The different resources are intended to give each biome a distinct gameplay purpose and difficulty.
 
 ### 4.2 Day/Night Cycle
 
