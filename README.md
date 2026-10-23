@@ -22,6 +22,7 @@ WebGL build link: https://ec23978.github.io/WebGL-Gameplay/V1/index.html
 - Right: S
 - Jump: Space bar
 - Sprint: Left Shift
+- Use Item: E
 - Camera: Mouse movement
 - Inventory: 0-9 in order to select an item slot
 - Combat: left click on the mouse to hit enemies
@@ -30,7 +31,7 @@ WebGL build link: https://ec23978.github.io/WebGL-Gameplay/V1/index.html
 
 ### Forest and Desert Biomes
 
-Two biomes have been created to give the player different areas to explore. The forest contains grass, trees, bushes and healing plants. The desert contains sandy ground, rocks and crystal ores. Both biomes are part of the same environment, with a pathway connecting them. The environments were built using Unity's basic 3D objects, materials and prefabs.
+Two biomes have been created to give the player different areas to explore. The forest contains grass, trees, bushes and healing plants. The desert contains sandy ground, rocks and crystal ores. Both biomes are part of the same environment, with a pathway and a few rocks the Player has to jump over connecting the 2. The environments were built using Unity's basic 3D objects, materials and prefabs.
 
 ### Day and Night Cycle
 
