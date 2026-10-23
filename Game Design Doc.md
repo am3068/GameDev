@@ -14,13 +14,13 @@ Untitled Survival Game is a 3D survival game in which the player wakes up in the
 
 The player must explore the environment, collect resources, manage health and hunger, craft useful items and defend themselves against hostile creatures.
 
-The game contains two distinct biomes, a forest and a desert, connected within the same world. Each biome contains different resources that encourage exploration. Rocks block the pathway between the two biomes, the Player must overcome all obstacles.
+The game contains two distinct biomes, a forest and a desert, connected within the same world. Each biome contains different resources that encourage exploration. Rocks block the pathway between the two biomes, the player must overcome all obstacles.
 
 A day/night cycle tracks the passage of time, while the survival challenge increases as the game progresses.
 
 **Main Objective:** Survive until Day 4, when the escape portal unlocks, and reach the portal to escape.
 
-The game is designed to encourage exploration, resource management and strategic survival decisions.
+The game is designed to encourage exploration, resource management, utilise movement and have strategic survival decisions.
 
 ---
 
