@@ -10,11 +10,11 @@
 
 ## 1. Game Overview
 
-Untitled Survival Game is a 3D survival game in which the player is trapped in a hostile dimension and must survive long enough to escape.
+Untitled Survival Game is a 3D survival game in which the player wakes up in the middle of nowhere, trapped in a hostile dimension and must survive long enough to escape.
 
 The player must explore the environment, collect resources, manage health and hunger, craft useful items and defend themselves against hostile creatures.
 
-The game contains two distinct biomes, a forest and a desert, connected within the same world. Each biome contains different resources that encourage exploration.
+The game contains two distinct biomes, a forest and a desert, connected within the same world. Each biome contains different resources that encourage exploration. Rocks block the pathway between the two biomes, the Player must overcome all obstacles.
 
 A day/night cycle tracks the passage of time, while the survival challenge increases as the game progresses.
 
