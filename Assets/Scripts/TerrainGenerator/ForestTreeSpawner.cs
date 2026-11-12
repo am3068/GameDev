@@ -5,12 +5,12 @@ public class ForestTreeSpawner : MonoBehaviour
 {
     public Terrain forestTerrain;
     public GameObject[] treePrefabs;
-    public BoxCollider treeExclusionZone;
+    public BoxCollider[] noSpawnZones;
     public Transform vegetationParent;
 
     public int treeCount = 100;
     public int seed = 12345;
-    public float minimumSpacing = 4f;
+    public float minimumSpacing = 2.5f;
 
     void Start()
     {
@@ -48,9 +48,8 @@ public class ForestTreeSpawner : MonoBehaviour
             position.y = forestTerrain.SampleHeight(position) +
                 forestTerrain.transform.position.y;
 
-            // Keep trees away from the shed
-            if (treeExclusionZone != null &&
-                treeExclusionZone.bounds.Contains(position))
+            // Avoid the shed and trail
+            if (IsInNoSpawnZone(position))
                 continue;
 
             // Check distance from existing trees and bushes
@@ -92,5 +91,26 @@ public class ForestTreeSpawner : MonoBehaviour
         }
 
         Debug.Log("Generated " + spawned + " trees!");
+    }
+
+    bool IsInNoSpawnZone(Vector3 position)
+    {
+        foreach (BoxCollider zone in noSpawnZones)
+        {
+            if (zone == null)
+                continue;
+
+            Vector3 localPosition = zone.transform.InverseTransformPoint(position);
+
+            Vector3 halfSize = zone.size / 2f;
+
+            if (Mathf.Abs(localPosition.x - zone.center.x) < halfSize.x &&
+                Mathf.Abs(localPosition.z - zone.center.z) < halfSize.z)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
