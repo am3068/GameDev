@@ -3,61 +3,80 @@ using UnityEngine;
 
 public class IslandTerrainGenerator : MonoBehaviour
 {
-    public Terrain terrain;
-
+    public Terrain islandTerrain;
+    [Header("Island Settings")]
     public int seed = 12345;
-    public float noiseScale = 3.5f;
-    public float height = 0.10f;
-    public float edgeHeight = 0.30f;
-
+    public float noiseScale = 3f;
+    public float islandHeight = 0.15f;
+    [Header("Terrain Textures")]
+    public TerrainLayer[] groundTextures;
     [ContextMenu("Generate Island")]
     void GenerateIsland()
     {
-        if (terrain == null)
-        {
-            Debug.LogError("Assign your terrain first!");
+        if (islandTerrain == null)
             return;
-        }
-
-        TerrainData data = terrain.terrainData;
-        int resolution = data.heightmapResolution;
-
+        TerrainData terrainData = islandTerrain.terrainData;
+        int resolution = terrainData.heightmapResolution;
         float[,] heights = new float[resolution, resolution];
-
-        float offsetX = seed * 0.1f;
-        float offsetZ = seed * 0.2f;
+        float randomX = seed * 0.1f;
+        float randomZ = seed * 0.2f;
 
         for (int z = 0; z < resolution; z++)
         {
             for (int x = 0; x < resolution; x++)
             {
-                float xPosition = (float)x / (resolution - 1);
-                float zPosition = (float)z / (resolution - 1);
-
+                float xPos = (float)x / (resolution - 1);
+                float zPos = (float)z / (resolution - 1);
                 float noise = Mathf.PerlinNoise(
-                    xPosition * noiseScale + offsetX,
-                    zPosition * noiseScale + offsetZ
+                    xPos * noiseScale + randomX,
+                    zPos * noiseScale + randomZ
                 );
-
-                // Generate mountains on three sides
-                float left = 1f - Mathf.Clamp01(xPosition / 0.2f);
-                float right = 1f - Mathf.Clamp01((1f - xPosition) / 0.2f);
-                float far = 1f - Mathf.Clamp01((1f - zPosition) / 0.2f);
-
-                float mountains = Mathf.Max(left, Mathf.Max(right, far));
-
-                // Keep the bridge side low
-                float bridgeSide = Mathf.Clamp01(zPosition / 0.12f);
-
-                float normalHeight = 0.02f + noise * height;
-
-                heights[z, x] = normalHeight * bridgeSide
-                    + mountains * edgeHeight * bridgeSide;
+                float distance = Vector2.Distance(
+                    new Vector2(xPos, zPos),
+                    new Vector2(0.5f, 0.5f)
+                );
+                float islandShape = 1f - Mathf.Clamp01(distance * 1.6f);
+                heights[z, x] = noise * islandHeight * islandShape;
             }
         }
+        terrainData.SetHeights(0, 0, heights);
+        PaintIsland(terrainData);
+    }
 
-        data.SetHeights(0, 0, heights);
+    void PaintIsland(TerrainData terrainData)
+    {
+        if (groundTextures == null || groundTextures.Length != 3)
+            return;
 
-        Debug.Log("Island generated!");
+        terrainData.terrainLayers = groundTextures;
+
+        int resolution = terrainData.alphamapResolution;
+        float[,,] textures = new float[resolution, resolution, 3];
+
+        for (int z = 0; z < resolution; z++)
+        {
+            for (int x = 0; x < resolution; x++)
+            {
+                float xPos = (float)x / (resolution - 1);
+                float zPos = (float)z / (resolution - 1);
+                float groundHeight = terrainData.GetInterpolatedHeight(xPos, zPos);
+                groundHeight /= terrainData.size.y;
+
+                float sand = 1f - Mathf.InverseLerp(0.15f, 0.25f, groundHeight);
+                float rock = Mathf.InverseLerp(0.55f, 0.75f, groundHeight);
+                float grass = 1f - sand - rock;
+
+                sand = Mathf.Clamp01(sand);
+                grass = Mathf.Clamp01(grass);
+                rock = Mathf.Clamp01(rock);
+
+                float total = sand + grass + rock;
+
+                textures[z, x, 0] = sand / total;
+                textures[z, x, 1] = grass / total;
+                textures[z, x, 2] = rock / total;
+            }
+        }
+        terrainData.SetAlphamaps(0, 0, textures);
     }
 }

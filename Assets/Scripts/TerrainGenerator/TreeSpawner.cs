@@ -3,11 +3,10 @@ using UnityEngine;
 
 public class ForestTreeSpawner : MonoBehaviour
 {
-    public Terrain forestTerrain;
+    public Terrain islandTerrain;
     public GameObject[] treePrefabs;
     public BoxCollider[] noSpawnZones;
     public Transform vegetationParent;
-
     public int treeCount = 100;
     public int seed = 12345;
     public float minimumSpacing = 2.5f;
@@ -16,25 +15,21 @@ public class ForestTreeSpawner : MonoBehaviour
     {
         GenerateTrees();
     }
-
     void GenerateTrees()
     {
-        if (forestTerrain == null || treePrefabs == null ||
+        if (islandTerrain == null || treePrefabs == null ||
             treePrefabs.Length == 0 || vegetationParent == null)
-        {
-            Debug.LogError("Assign all required references!");
             return;
-        }
 
         System.Random random = new System.Random(seed);
-        TerrainData data = forestTerrain.terrainData;
 
-        int spawned = 0;
-        int attempts = 0;
+        TerrainData data = islandTerrain.terrainData;
+        int spawnedTrees = 0;
+        int tries = 0;
 
-        while (spawned < treeCount && attempts < treeCount * 20)
+        while (spawnedTrees < treeCount && tries < treeCount * 20)
         {
-            attempts++;
+            tries++;
 
             float angle = (float)random.NextDouble() * Mathf.PI * 2f;
             float radius = Mathf.Sqrt((float)random.NextDouble()) * 0.38f;
@@ -42,27 +37,25 @@ public class ForestTreeSpawner : MonoBehaviour
             float x = (0.5f + Mathf.Cos(angle) * radius) * data.size.x;
             float z = (0.5f + Mathf.Sin(angle) * radius) * data.size.z;
 
-            Vector3 position = forestTerrain.transform.position +
+            Vector3 treePosition = islandTerrain.transform.position +
                 new Vector3(x, 0f, z);
 
-            position.y = forestTerrain.SampleHeight(position) +
-                forestTerrain.transform.position.y;
+            treePosition.y = islandTerrain.SampleHeight(treePosition) +
+                islandTerrain.transform.position.y;
 
-            // Avoid the shed and trail
-            if (IsInNoSpawnZone(position))
+            if (IsInNoSpawnZone(treePosition))
                 continue;
-
-            // Check distance from existing trees and bushes
             bool tooClose = false;
-
             for (int i = 0; i < vegetationParent.childCount; i++)
             {
-                Vector3 otherPosition = vegetationParent.GetChild(i).position;
+                Vector3 otherTree = vegetationParent.GetChild(i).position;
 
-                Vector2 current = new Vector2(position.x, position.z);
-                Vector2 other = new Vector2(otherPosition.x, otherPosition.z);
+                float distance = Vector2.Distance(
+                    new Vector2(treePosition.x, treePosition.z),
+                    new Vector2(otherTree.x, otherTree.z)
+                );
 
-                if (Vector2.Distance(current, other) < minimumSpacing)
+                if (distance < minimumSpacing)
                 {
                     tooClose = true;
                     break;
@@ -72,43 +65,37 @@ public class ForestTreeSpawner : MonoBehaviour
             if (tooClose)
                 continue;
 
-            GameObject prefab = treePrefabs[random.Next(treePrefabs.Length)];
-
-            if (prefab == null)
+            GameObject chosenTree = treePrefabs[random.Next(treePrefabs.Length)];
+            if (chosenTree == null)
                 continue;
 
-            GameObject tree = Instantiate(
-                prefab,
-                position,
+            GameObject newTree = Instantiate(
+                chosenTree,
+                treePosition,
                 Quaternion.Euler(0f, (float)random.NextDouble() * 360f, 0f),
                 vegetationParent
             );
 
-            float scale = 0.9f + (float)random.NextDouble() * 0.3f;
-            tree.transform.localScale *= scale;
+            float treeSize = 0.9f + (float)random.NextDouble() * 0.3f;
+            newTree.transform.localScale *= treeSize;
 
-            spawned++;
+            spawnedTrees++;
         }
-
-        Debug.Log("Generated " + spawned + " trees!");
     }
-
     bool IsInNoSpawnZone(Vector3 position)
     {
+        if (noSpawnZones == null)
+            return false;
+
         foreach (BoxCollider zone in noSpawnZones)
         {
             if (zone == null)
                 continue;
-
             Vector3 localPosition = zone.transform.InverseTransformPoint(position);
-
-            Vector3 halfSize = zone.size / 2f;
-
-            if (Mathf.Abs(localPosition.x - zone.center.x) < halfSize.x &&
-                Mathf.Abs(localPosition.z - zone.center.z) < halfSize.z)
-            {
+            Vector3 zoneSize = zone.size / 2f;
+            if (Mathf.Abs(localPosition.x - zone.center.x) < zoneSize.x &&
+                Mathf.Abs(localPosition.z - zone.center.z) < zoneSize.z)
                 return true;
-            }
         }
 
         return false;
