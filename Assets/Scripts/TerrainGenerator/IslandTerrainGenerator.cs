@@ -62,8 +62,8 @@ public class IslandTerrainGenerator : MonoBehaviour
                 float groundHeight = terrainData.GetInterpolatedHeight(xPos, zPos);
                 groundHeight /= terrainData.size.y;
 
-                float sand = 1f - Mathf.InverseLerp(0.15f, 0.25f, groundHeight);
-                float rock = Mathf.InverseLerp(0.55f, 0.75f, groundHeight);
+                float sand = 1f - Mathf.InverseLerp(0.08f, 0.13f, groundHeight);
+                float rock = Mathf.InverseLerp(0.23f, 0.25f, groundHeight);
                 float grass = 1f - sand - rock;
 
                 sand = Mathf.Clamp01(sand);
