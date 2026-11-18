@@ -23,7 +23,22 @@ public class PortalTeleport : MonoBehaviour
         if (controller != null)
             controller.enabled = false;
 
-        other.transform.position = destination.position;
+        Vector3 position = destination.position;
+
+        foreach (Terrain terrain in Terrain.activeTerrains)
+        {
+            Vector3 origin = terrain.transform.position;
+            Vector3 size = terrain.terrainData.size;
+
+            if (position.x >= origin.x && position.x <= origin.x + size.x &&
+                position.z >= origin.z && position.z <= origin.z + size.z)
+            {
+                position.y = terrain.SampleHeight(position) + origin.y + 2f;
+                break;
+            }
+        }
+
+        other.transform.position = position;
 
         if (controller != null)
             controller.enabled = true;
