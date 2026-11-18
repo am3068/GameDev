@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 public class ForestBushSpawner : MonoBehaviour
@@ -7,110 +6,78 @@ public class ForestBushSpawner : MonoBehaviour
     public GameObject[] bushPrefabs;
     public BoxCollider[] noSpawnZones;
     public Transform vegetationParent;
-
     public int bushCount = 80;
     public int seed = 54321;
     public float minimumSpacing = 2.5f;
+    public float pathClearance = 3f;
 
-    void Start()
-    {
-        GenerateBushes();
-    }
+    void Start() => GenerateBushes();
 
     void GenerateBushes()
     {
-        if (forestTerrain == null || bushPrefabs == null ||
-            bushPrefabs.Length == 0 || vegetationParent == null)
-        {
-            Debug.LogError("Assign all required references!");
-            return;
-        }
+        if (!forestTerrain || bushPrefabs == null || bushPrefabs.Length == 0 || !vegetationParent) return;
 
+        TerrainData terrain = forestTerrain.terrainData;
+        if (terrain.terrainLayers.Length < 3) return;
+        float[,,] paint = terrain.GetAlphamaps(0, 0, terrain.alphamapWidth, terrain.alphamapHeight);
         System.Random random = new System.Random(seed);
-        TerrainData data = forestTerrain.terrainData;
-
         int spawned = 0;
-        int attempts = 0;
 
-        while (spawned < bushCount && attempts < bushCount * 20)
+        for (int attempt = 0; attempt < bushCount * 30 && spawned < bushCount; attempt++)
         {
-            attempts++;
+            float u = (float)random.NextDouble();
+            float v = (float)random.NextDouble();
 
-            float angle = (float)random.NextDouble() * Mathf.PI * 2f;
-            float radius = Mathf.Sqrt((float)random.NextDouble()) * 0.38f;
+            // bushes grow on grass, but not on paths or cliffs
+            if (Layer(paint, u, v, 0) < 0.9f || terrain.GetSteepness(u, v) > 35f || NearPath(paint, terrain, u, v)) continue;
 
-            float x = (0.5f + Mathf.Cos(angle) * radius) * data.size.x;
-            float z = (0.5f + Mathf.Sin(angle) * radius) * data.size.z;
-
-            Vector3 position = forestTerrain.transform.position +
-                new Vector3(x, 0f, z);
-
-            position.y = forestTerrain.SampleHeight(position) +
-                forestTerrain.transform.position.y;
-
-            // Avoid the shed and trail
-            if (IsInNoSpawnZone(position))
-                continue;
-
-            // Avoid spawning too close to other vegetation
-            bool tooClose = false;
-
-            for (int i = 0; i < vegetationParent.childCount; i++)
-            {
-                Vector3 otherPosition = vegetationParent.GetChild(i).position;
-
-                Vector2 current = new Vector2(position.x, position.z);
-                Vector2 other = new Vector2(otherPosition.x, otherPosition.z);
-
-                if (Vector2.Distance(current, other) < minimumSpacing)
-                {
-                    tooClose = true;
-                    break;
-                }
-            }
-
-            if (tooClose)
-                continue;
+            Vector3 position = forestTerrain.transform.position + new Vector3(u * terrain.size.x, 0, v * terrain.size.z);
+            position.y = forestTerrain.SampleHeight(position) + forestTerrain.transform.position.y;
+            if (Blocked(position)) continue;
 
             GameObject prefab = bushPrefabs[random.Next(bushPrefabs.Length)];
-
-            if (prefab == null)
-                continue;
-
-            GameObject bush = Instantiate(
-                prefab,
-                position,
-                Quaternion.Euler(0f, (float)random.NextDouble() * 360f, 0f),
-                vegetationParent
-            );
-
-            float scale = 0.8f + (float)random.NextDouble() * 0.4f;
-            bush.transform.localScale *= scale;
-
+            if (!prefab) continue;
+            GameObject bush = Instantiate(prefab, position, Quaternion.Euler(0, random.Next(360), 0), vegetationParent);
+            bush.transform.localScale *= 0.8f + (float)random.NextDouble() * 0.4f;
             spawned++;
         }
-
-        Debug.Log("Generated " + spawned + " bushes!");
     }
 
-    bool IsInNoSpawnZone(Vector3 position)
+    float Layer(float[,,] paint, float u, float v, int layer)
     {
-        foreach (BoxCollider zone in noSpawnZones)
+        int x = Mathf.Clamp(Mathf.RoundToInt(u * (paint.GetLength(1) - 1)), 0, paint.GetLength(1) - 1);
+        int z = Mathf.Clamp(Mathf.RoundToInt(v * (paint.GetLength(0) - 1)), 0, paint.GetLength(0) - 1);
+        return paint[z, x, layer];
+    }
+
+    bool NearPath(float[,,] paint, TerrainData terrain, float u, float v)
+    {
+        if (Layer(paint, u, v, 1) > 0.1f) return true;
+        for (int i = 0; i < 8; i++)
         {
-            if (zone == null)
-                continue;
-
-            Vector3 localPosition = zone.transform.InverseTransformPoint(position);
-
-            Vector3 halfSize = zone.size / 2f;
-
-            if (Mathf.Abs(localPosition.x - zone.center.x) < halfSize.x &&
-                Mathf.Abs(localPosition.z - zone.center.z) < halfSize.z)
-            {
-                return true;
-            }
+            float angle = i * Mathf.PI / 4f;
+            float x = Mathf.Clamp01(u + Mathf.Cos(angle) * pathClearance / terrain.size.x);
+            float z = Mathf.Clamp01(v + Mathf.Sin(angle) * pathClearance / terrain.size.z);
+            if (Layer(paint, x, z, 1) > 0.1f) return true;
         }
+        return false;
+    }
 
+    bool Blocked(Vector3 position)
+    {
+        if (noSpawnZones != null)
+            foreach (BoxCollider zone in noSpawnZones)
+            {
+                if (!zone) continue;
+                Vector3 point = zone.transform.InverseTransformPoint(position) - zone.center;
+                if (Mathf.Abs(point.x) < zone.size.x / 2f && Mathf.Abs(point.z) < zone.size.z / 2f) return true;
+            }
+
+        for (int i = 0; i < vegetationParent.childCount; i++)
+        {
+            Vector3 other = vegetationParent.GetChild(i).position;
+            if (Vector2.Distance(new Vector2(position.x, position.z), new Vector2(other.x, other.z)) < minimumSpacing) return true;
+        }
         return false;
     }
 }
