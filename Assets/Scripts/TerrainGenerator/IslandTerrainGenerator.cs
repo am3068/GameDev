@@ -29,8 +29,10 @@ public class ProceduralForestGenerator : MonoBehaviour
         yield return null;
         SnapObjectsToTerrain();
     }  
+    [ContextMenu("Generate Forest")]
     public void GenerateForest()
     {
+    
         if (!forestTerrain || !grassTexture || !pathTexture ||
             !rockTexture || !HasMask()) return;
 
