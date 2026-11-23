@@ -12,9 +12,19 @@ public class PlayerCombat : MonoBehaviour
     public float attackRadius = 0.75f;
     public float attackCooldown = 0.5f;
 
-    private float nextAttackTime;
+    [Header("Axe Settings")]
+    public float axeDamage = 35f;
+    public float axeRange = 3f;
 
-    void Update()
+    private float nextAttackTime;
+    private InventorySystem inventory;
+
+    private void Awake()
+    {
+        inventory = GetComponent<InventorySystem>();
+    }
+
+    private void Update()
     {
         if (Mouse.current != null &&
             Mouse.current.leftButton.wasPressedThisFrame &&
@@ -25,7 +35,7 @@ public class PlayerCombat : MonoBehaviour
         }
     }
 
-    void Attack()
+    private void Attack()
     {
         if (playerCamera == null)
         {
@@ -33,6 +43,36 @@ public class PlayerCombat : MonoBehaviour
             return;
         }
 
+        if (inventory != null && inventory.IsAxeEquipped)
+        {
+            ChopTree();
+            return;
+        }
+
+        PunchEnemy();
+    }
+
+    private void ChopTree()
+    {
+        Ray ray = new Ray(
+            playerCamera.transform.position,
+            playerCamera.transform.forward
+        );
+
+        if (Physics.Raycast(ray, out RaycastHit hit, axeRange))
+        {
+            TreeHealth tree =
+                hit.collider.GetComponentInParent<TreeHealth>();
+
+            if (tree != null)
+            {
+                tree.TakeDamage(axeDamage, inventory);
+            }
+        }
+    }
+
+    private void PunchEnemy()
+    {
         Vector3 attackCenter =
             playerCamera.transform.position +
             playerCamera.transform.forward * attackRange;
@@ -57,7 +97,7 @@ public class PlayerCombat : MonoBehaviour
         }
     }
 
-    void OnDrawGizmosSelected()
+    private void OnDrawGizmosSelected()
     {
         if (playerCamera == null)
             return;
@@ -68,6 +108,9 @@ public class PlayerCombat : MonoBehaviour
             playerCamera.transform.position +
             playerCamera.transform.forward * attackRange;
 
-        Gizmos.DrawWireSphere(attackCenter, attackRadius);
+        Gizmos.DrawWireSphere(
+            attackCenter,
+            attackRadius
+        );
     }
 }

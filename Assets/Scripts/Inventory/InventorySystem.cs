@@ -16,6 +16,13 @@ public class InventorySystem : MonoBehaviour
         get { return axeEquipped; }
     }
 
+    private bool swordEquipped = false;
+
+    public bool IsSwordEquipped
+    {
+        get { return swordEquipped; }
+    }
+
     private void Awake()
     {
         survival = GetComponent<PlayerSurvival>();
@@ -173,22 +180,65 @@ public class InventorySystem : MonoBehaviour
     }
 
 
+
     public void EquipAxe()
     {
         if (GetItemQuantity("Axe") < 1)
         {
             Debug.Log("You don't have an axe!");
-            axeEquipped = false;
             return;
         }
 
         axeEquipped = !axeEquipped;
 
         if (axeEquipped)
-            Debug.Log("Axe equipped!");
-        else
-            Debug.Log("Axe unequipped!");
+            swordEquipped = false;
+
+        Debug.Log(axeEquipped ? "Axe equipped!" : "Axe unequipped!");
     }
+
+
+    public bool CraftSword()
+    {
+        if (GetItemQuantity("Wood") < 5)
+        {
+            Debug.Log("You need 5 Wood to craft a sword!");
+            return false;
+        }
+
+        if (GetItemQuantity("Sword") == 0 &&
+            itemNames.Count >= 10)
+        {
+            Debug.Log("Inventory is full!");
+            return false;
+        }
+
+        RemoveItem("Wood", 5);
+        AddItem("Sword", 1);
+
+        Debug.Log("Sword crafted successfully!");
+        return true;
+    }
+
+    public void EquipSword()
+    {
+        if (GetItemQuantity("Sword") < 1)
+        {
+            Debug.Log("You don't have a sword!");
+            return;
+        }
+
+        swordEquipped = !swordEquipped;
+
+        if (swordEquipped)
+            axeEquipped = false;
+
+        Debug.Log(swordEquipped
+            ? "Sword equipped!"
+            : "Sword unequipped!");
+    }
+
+
 
 
     public int GetSlotCount()

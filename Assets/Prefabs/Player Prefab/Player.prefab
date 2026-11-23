@@ -346,6 +346,7 @@ GameObject:
   - component: {fileID: 6735628604122361170}
   - component: {fileID: 8885214076733560299}
   - component: {fileID: 4508134732715264720}
+  - component: {fileID: 7699354055148910567}
   m_Layer: 0
   m_Name: Player
   m_TagString: Untagged
@@ -560,6 +561,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b8a0272d04474817b6fd8d852e98880, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &7699354055148910567
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6550291901621143074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4fae0f347e1ad4a07b5e38d1f1f1b31c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  axeObject: {fileID: 7816690554395589593}
 --- !u!1 &7816690554395589593
 GameObject:
   m_ObjectHideFlags: 0
@@ -825,7 +839,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 0}
-  m_VersionIndex: 25
+  m_VersionIndex: 40
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []

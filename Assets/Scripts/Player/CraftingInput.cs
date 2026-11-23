@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,16 +16,17 @@ public class CraftingInput : MonoBehaviour
         if (Keyboard.current == null || inventory == null)
             return;
 
-        // Press C to craft an axe.
         if (Keyboard.current.cKey.wasPressedThisFrame)
-        {
             inventory.CraftAxe();
-        }
 
-        // Press E to equip or unequip the axe.
         if (Keyboard.current.eKey.wasPressedThisFrame)
-        {
             inventory.EquipAxe();
-        }
+
+        if (Keyboard.current.vKey.wasPressedThisFrame)
+            inventory.CraftSword();
+
+        if (Keyboard.current.rKey.wasPressedThisFrame)
+            inventory.EquipSword();
     }
 }
+

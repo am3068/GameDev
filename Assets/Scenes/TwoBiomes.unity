@@ -2690,7 +2690,7 @@ PrefabInstance:
       objectReference: {fileID: 664172033}
     - target: {fileID: 3304070732396943924, guid: 3380704799bbd417cb1f0e219e9d6de2, type: 3}
       propertyPath: m_VersionIndex
-      value: 30
+      value: 39
       objectReference: {fileID: 0}
     - target: {fileID: 3592716065310682366, guid: 3380704799bbd417cb1f0e219e9d6de2, type: 3}
       propertyPath: hungerDrainPerSecond
@@ -3196,7 +3196,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-46232
+  m_Name: pb_Mesh-2384
   serializedVersion: 11
   m_SubMeshes: []
   m_Shapes:
@@ -6827,6 +6827,8 @@ MonoBehaviour:
   attackDamage: 25
   attackRadius: 0.75
   attackCooldown: 0.5
+  axeDamage: 35
+  axeRange: 3
 --- !u!4 &1265511663 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7535661427507689325, guid: 6304919c4520e4593a6422a011deecb6, type: 3}
@@ -8248,7 +8250,7 @@ MonoBehaviour:
   m_PreserveMeshAssetOnDestroy: 0
   assetGuid: 
   m_Mesh: {fileID: 1883223873}
-  m_VersionIndex: 8
+  m_VersionIndex: 17
   m_IsSelectable: 1
   m_SelectedFaces: 
   m_SelectedEdges: []
@@ -10531,7 +10533,7 @@ Mesh:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: pb_Mesh-47320
+  m_Name: pb_Mesh34760
   serializedVersion: 11
   m_SubMeshes:
   - serializedVersion: 2
