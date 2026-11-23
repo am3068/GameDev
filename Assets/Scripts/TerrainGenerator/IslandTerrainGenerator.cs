@@ -133,12 +133,22 @@ public class ProceduralForestGenerator : MonoBehaviour
         {
             if (!parent) continue;
 
+            // Move the whole prefab, not its individual parts
             foreach (Transform obj in parent)
             {
-                Vector3 position = obj.position;
-                position.y = forestTerrain.SampleHeight(position)
-                           + forestTerrain.transform.position.y;
+                Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+                if (renderers.Length == 0) continue;
 
+                float bottom = float.MaxValue;
+
+                foreach (Renderer part in renderers)
+                    bottom = Mathf.Min(bottom, part.bounds.min.y);
+
+                Vector3 position = obj.position;
+                float ground = forestTerrain.SampleHeight(position)
+                            + forestTerrain.transform.position.y;
+
+                position.y += ground - bottom;
                 obj.position = position;
             }
         }
