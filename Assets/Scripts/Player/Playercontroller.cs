@@ -27,6 +27,7 @@ public class PlayerController : MonoBehaviour
     private Vector2 lookInput;
 
     private bool jumpRequested;
+    private float jumpTimer;
     private bool sprintHeld;
 
     private void Start()
@@ -101,7 +102,7 @@ public class PlayerController : MonoBehaviour
     public void OnJump(InputValue value)
     {
         if (value.isPressed)
-            jumpRequested = true;
+            jumpTimer = 0.15f;
     }
 
     // Input Action: Sprint
@@ -159,19 +160,16 @@ public class PlayerController : MonoBehaviour
     {
         bool grounded = controller.isGrounded;
 
-        // Keep the character grounded.
         if (grounded && verticalVelocity < 0f)
-        {
             verticalVelocity = -2f;
+
+        if (grounded && jumpTimer > 0f)
+        {
+            verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            jumpTimer = 0f;
         }
 
-        // Jump only when grounded.
-        if (grounded && jumpRequested)
-        {
-            verticalVelocity = Mathf.Sqrt(
-                jumpHeight * -2f * gravity
-            );
-        }
+        jumpTimer -= Time.deltaTime;
 
         jumpRequested = false;
 
