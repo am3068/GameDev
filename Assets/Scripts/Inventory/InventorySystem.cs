@@ -9,6 +9,13 @@ public class InventorySystem : MonoBehaviour
 
     private PlayerSurvival survival;
 
+    private bool axeEquipped = false;
+
+    public bool IsAxeEquipped
+    {
+        get { return axeEquipped; }
+    }
+
     private void Awake()
     {
         survival = GetComponent<PlayerSurvival>();
@@ -87,6 +94,102 @@ public class InventorySystem : MonoBehaviour
             itemCounts.RemoveAt(slot);
         }
     }
+
+
+    public int GetItemQuantity(string item)
+    {
+        int slot = itemNames.IndexOf(item);
+
+        if (slot == -1)
+            return 0;
+
+        return itemCounts[slot];
+    }
+
+    public bool RemoveItem(string item, int amount)
+    {
+        if (amount <= 0)
+            return false;
+
+        int slot = itemNames.IndexOf(item);
+
+        if (slot == -1 || itemCounts[slot] < amount)
+            return false;
+
+        itemCounts[slot] -= amount;
+
+        if (itemCounts[slot] == 0)
+        {
+            itemNames.RemoveAt(slot);
+            itemCounts.RemoveAt(slot);
+        }
+
+        return true;
+    }
+
+    public bool AddItem(string item, int amount)
+    {
+        if (string.IsNullOrEmpty(item) || amount <= 0)
+            return false;
+
+        int slot = itemNames.IndexOf(item);
+
+        if (slot >= 0)
+        {
+            itemCounts[slot] += amount;
+            return true;
+        }
+
+        if (itemNames.Count >= 10)
+            return false;
+
+        itemNames.Add(item);
+        itemCounts.Add(amount);
+        return true;
+    }
+
+
+    public bool CraftAxe()
+    {
+        if (GetItemQuantity("Wood") < 2 ||
+            GetItemQuantity("Ore") < 1)
+        {
+            Debug.Log("Not enough resources to craft an axe!");
+            return false;
+        }
+
+        if (GetItemQuantity("Axe") == 0 && itemNames.Count >= 10)
+        {
+            Debug.Log("Inventory is full!");
+            return false;
+        }
+
+        RemoveItem("Wood", 2);
+        RemoveItem("Ore", 1);
+        AddItem("Axe", 1);
+
+        Debug.Log("Axe crafted successfully!");
+        return true;
+    }
+
+
+    public void EquipAxe()
+    {
+        if (GetItemQuantity("Axe") < 1)
+        {
+            Debug.Log("You don't have an axe!");
+            axeEquipped = false;
+            return;
+        }
+
+        axeEquipped = !axeEquipped;
+
+        if (axeEquipped)
+            Debug.Log("Axe equipped!");
+        else
+            Debug.Log("Axe unequipped!");
+    }
+
 
     public int GetSlotCount()
     {
