@@ -17,7 +17,7 @@ public class InventoryHotbarUI : MonoBehaviour
 
     private TMP_Text[] labels;
     private InputAction[] slotKeys = new InputAction[10];
-    private InputAction useKey;
+    //private InputAction useKey;
     private int selectedSlot = 0;
 
     private void Awake()
@@ -37,10 +37,11 @@ public class InventoryHotbarUI : MonoBehaviour
 
                 slotKeys[i] =
                     playerInput.actions.FindAction(actionName, false);
+            
             }
 
-            useKey = playerInput.actions.FindAction(
-                "Player/UseItem", false);
+            //useKey = playerInput.actions.FindAction(
+                //"Player/UseItem", false);
         }
 
         for (int i = 0; i < slotButtons.Length; i++)
@@ -65,18 +66,15 @@ public class InventoryHotbarUI : MonoBehaviour
     {
         for (int i = 0; i < slotKeys.Length; i++)
         {
-            if (slotKeys[i] != null &&
-                slotKeys[i].WasPressedThisFrame())
+            if (slotKeys[i] != null && slotKeys[i].WasPressedThisFrame())
             {
                 SelectSlot(i);
-            }
-        }
 
-        if (useKey != null &&
-            useKey.WasPressedThisFrame() &&
-            inventory != null)
-        {
-            inventory.UseItemInSlot(selectedSlot);
+                if (inventory != null)
+                {
+                    inventory.UseItemInSlot(i);
+                }
+            }
         }
 
         UpdateLabels();
