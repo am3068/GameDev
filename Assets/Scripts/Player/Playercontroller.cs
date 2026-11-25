@@ -5,6 +5,8 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
+    [SerializeField] private Transform spawnPoint;
+
     [Header("Movement")]
     public float moveSpeed = 5f;
     public float sprintSpeed = 8f;
@@ -26,13 +28,20 @@ public class PlayerController : MonoBehaviour
     private Vector2 moveInput;
     private Vector2 lookInput;
 
-    private bool jumpRequested;
     private float jumpTimer;
     private bool sprintHeld;
 
     private void Start()
     {
         controller = GetComponent<CharacterController>();
+        if (spawnPoint != null)
+        {
+            controller.enabled = false;
+            transform.SetPositionAndRotation(spawnPoint.position, Quaternion.Euler(0f, spawnPoint.eulerAngles.y, 0f));
+            controller.enabled = true;
+            cameraPitch = Mathf.Clamp(Mathf.DeltaAngle(0f, spawnPoint.eulerAngles.x), -maxLookAngle, maxLookAngle);
+        }
+
         playerInput = GetComponent<PlayerInput>();
 
         if (playerInput == null)
@@ -63,6 +72,9 @@ public class PlayerController : MonoBehaviour
             if (childCamera != null)
                 cameraTransform = childCamera.transform;
         }
+
+        if (spawnPoint != null && cameraTransform != null)
+            cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
 
         LockCursor();
     }
@@ -170,8 +182,6 @@ public class PlayerController : MonoBehaviour
         }
 
         jumpTimer -= Time.deltaTime;
-
-        jumpRequested = false;
 
         // Apply gravity vertical only
         verticalVelocity += gravity * Time.deltaTime;

@@ -13,7 +13,15 @@ public class ForestRockSpawner : MonoBehaviour
     public float minimumSpacing = 4f;
     public float pathClearance = 3f;
 
-    void Start() => GenerateRocks();
+    void Start()
+    {
+        var scatter = islandTerrain ? islandTerrain.GetComponent<NaturalTerrainScatter>() : null;
+        if (scatter && scatter.isActiveAndEnabled)
+            scatter.AddBatch(NaturalTerrainScatter.Kind.Rock, rockPrefabs, noSpawnZones, rockParent,
+                rockCount, seed, minimumSpacing, pathClearance);
+        else
+            GenerateRocks();
+    }
 
     void GenerateRocks()
     {

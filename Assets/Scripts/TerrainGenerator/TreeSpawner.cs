@@ -11,7 +11,15 @@ public class ForestTreeSpawner : MonoBehaviour
     public float minimumSpacing = 2.5f;
     public float pathClearance = 4f;
 
-    void Start() => GenerateTrees();
+    void Start()
+    {
+        var scatter = islandTerrain ? islandTerrain.GetComponent<NaturalTerrainScatter>() : null;
+        if (scatter && scatter.isActiveAndEnabled)
+            scatter.AddBatch(NaturalTerrainScatter.Kind.Tree, treePrefabs, noSpawnZones, vegetationParent,
+                treeCount, seed, minimumSpacing, pathClearance);
+        else
+            GenerateTrees();
+    }
 
     void GenerateTrees()
     {

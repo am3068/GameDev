@@ -18,9 +18,12 @@ public class ProceduralForestGenerator : MonoBehaviour
     [Header("Paths")]
     [Min(1)] public float mountainPathClearance = 15f;
     [Range(0, 90)] public float rockSteepness = 45f;
+    public bool smoothPathTransitions;
+    [Min(1)] public float pathShoulderWidth = 5f;
 
     [Header("Objects")]
     public Transform[] objectParents;
+    [Min(0)] public float objectGroundInset;
 
     [SerializeField, HideInInspector] byte[] savedPaths;
     [SerializeField, HideInInspector] int maskWidth, maskHeight;
@@ -57,18 +60,28 @@ public class ProceduralForestGenerator : MonoBehaviour
                 float v = (float)z / (resolution - 1);
 
                 // keeps the same hills but changes the noise with each seed
-                float hills =
+                float broadHills =
                     Noise(u, v, 1.8f, noiseOffset) * 0.60f +
-                    Noise(u, v, 4.5f, noiseOffset + 50f) * 0.25f +
+                    Noise(u, v, 4.5f, noiseOffset + 50f) * 0.25f;
+                float hills = broadHills +
                     Noise(u, v, 12f, noiseOffset + 100f) * 0.10f +
                     Noise(u, v, 25f, noiseOffset + 150f) * 0.05f;
 
                 float height = Mathf.Clamp01(0.5f + hills * 1.6f) * hillHeight;
 
                 // adds larger hills around the map
-                height += Mathf.PerlinNoise(
+                float rollingHeight = Mathf.PerlinNoise(
                     u * 1.2f + noiseOffset + 200f,
                     v * 1.2f + noiseOffset + 200f) * 8f;
+                height += rollingHeight;
+
+                if (smoothPathTransitions)
+                {
+                    float trailHeight = Mathf.Clamp01(0.5f + broadHills) * hillHeight
+                        + Mathf.Lerp(4f, rollingHeight, 0.65f);
+                    float shoulder = Mathf.SmoothStep(0f, 1f, pathDistances[z, x] / pathShoulderWidth);
+                    height = Mathf.Lerp(trailHeight, height, shoulder);
+                }
 
                 // mountains get taller towards the edges
                 float edgeDistance = Mathf.Min(u, 1f - u, v, 1f - v);
@@ -118,8 +131,7 @@ public class ProceduralForestGenerator : MonoBehaviour
         // saves the painted paths for later
         for (int z = 0; z < maskHeight; z++)
             for (int x = 0; x < maskWidth; x++)
-                savedPaths[z * maskWidth + x] =
-                    (byte)(paint[z, x, pathLayer] >= 0.5f ? 255 : 0);
+                savedPaths[z * maskWidth + x] = (byte)Mathf.RoundToInt(paint[z, x, pathLayer] * 255f);
 
         pathMask = null;
     }
@@ -148,7 +160,7 @@ public class ProceduralForestGenerator : MonoBehaviour
                 float ground = forestTerrain.SampleHeight(position)
                             + forestTerrain.transform.position.y;
 
-                position.y += ground - bottom;
+                position.y += ground - bottom - objectGroundInset;
                 obj.position = position;
             }
         }
@@ -169,8 +181,11 @@ public class ProceduralForestGenerator : MonoBehaviour
                 float v = (float)z / (height - 1);
 
                 float path = GetPath(u, v);
-                float rock = terrain.GetSteepness(u, v) >= rockSteepness
-                    ? 1f - path : 0f;
+                float slope = terrain.GetSteepness(u, v);
+                float rockWeight = smoothPathTransitions
+                    ? Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(rockSteepness - 6f, rockSteepness + 6f, slope))
+                    : (slope >= rockSteepness ? 1f : 0f);
+                float rock = (1f - path) * rockWeight;
 
                 paint[z, x, 0] = 1f - path - rock;
                 paint[z, x, 1] = path;
@@ -194,7 +209,7 @@ public class ProceduralForestGenerator : MonoBehaviour
             for (int x = 0; x < size; x++)
                 distances[z, x] = GetPath(
                     (float)x / (size - 1),
-                    (float)z / (size - 1)) > 0f ? 0f : 100000f;
+                    (float)z / (size - 1)) >= 0.5f ? 0f : 100000f;
 
         // finds the nearest path from both directions
         for (int pass = 0; pass < 2; pass++)
@@ -257,12 +272,24 @@ public class ProceduralForestGenerator : MonoBehaviour
         if (pathMask)
             value = pathMask.GetPixelBilinear(u, v).r;
         else
-        {
-            int x = Mathf.RoundToInt(u * (maskWidth - 1));
-            int z = Mathf.RoundToInt(v * (maskHeight - 1));
-            value = savedPaths[z * maskWidth + x] / 255f;
-        }
+            value = SampleSavedPath(u, v);
 
-        return value >= 0.5f ? 1f : 0f;
+        return smoothPathTransitions ? value : (value >= 0.5f ? 1f : 0f);
+    }
+
+    float SampleSavedPath(float u, float v)
+    {
+        float x = u * (maskWidth - 1);
+        float z = v * (maskHeight - 1);
+        if (!smoothPathTransitions)
+            return savedPaths[Mathf.RoundToInt(z) * maskWidth + Mathf.RoundToInt(x)] / 255f;
+
+        int left = Mathf.FloorToInt(x);
+        int right = Mathf.Min(left + 1, maskWidth - 1);
+        int bottom = Mathf.FloorToInt(z);
+        int top = Mathf.Min(bottom + 1, maskHeight - 1);
+        float low = Mathf.Lerp(savedPaths[bottom * maskWidth + left], savedPaths[bottom * maskWidth + right], x - left);
+        float high = Mathf.Lerp(savedPaths[top * maskWidth + left], savedPaths[top * maskWidth + right], x - left);
+        return Mathf.Lerp(low, high, z - bottom) / 255f;
     }
 }

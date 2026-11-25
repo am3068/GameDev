@@ -11,7 +11,15 @@ public class ForestBushSpawner : MonoBehaviour
     public float minimumSpacing = 2.5f;
     public float pathClearance = 3f;
 
-    void Start() => GenerateBushes();
+    void Start()
+    {
+        var scatter = forestTerrain ? forestTerrain.GetComponent<NaturalTerrainScatter>() : null;
+        if (scatter && scatter.isActiveAndEnabled)
+            scatter.AddBatch(NaturalTerrainScatter.Kind.Plant, bushPrefabs, noSpawnZones, vegetationParent,
+                bushCount, seed, minimumSpacing, pathClearance);
+        else
+            GenerateBushes();
+    }
 
     void GenerateBushes()
     {
