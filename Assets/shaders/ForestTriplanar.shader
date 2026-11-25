@@ -6,6 +6,7 @@ Shader "Custom/Forest Triplanar Terrain"
         [HideInInspector] _Splat0 ("Grass", 2D) = "white" {}
         [HideInInspector] _Splat1 ("Path", 2D) = "white" {}
         [HideInInspector] _Splat2 ("Rock", 2D) = "white" {}
+        [HideInInspector] _Splat3 ("Sand", 2D) = "white" {}
         _RockTileSize ("Rock Tile Size (Metres)", Float) = 5
     }
 
@@ -18,7 +19,7 @@ Shader "Custom/Forest Triplanar Terrain"
         #pragma surface surf Standard fullforwardshadows
         #pragma target 3.0
 
-        sampler2D _Control, _Splat0, _Splat1, _Splat2;
+        sampler2D _Control, _Splat0, _Splat1, _Splat2, _Splat3;
         float _RockTileSize;
 
         struct Input
@@ -26,6 +27,7 @@ Shader "Custom/Forest Triplanar Terrain"
             float2 uv_Control;
             float2 uv_Splat0;
             float2 uv_Splat1;
+            float2 uv_Splat3;
             float3 worldPos;
             float3 worldNormal;
         };
@@ -45,8 +47,10 @@ Shader "Custom/Forest Triplanar Terrain"
             float4 paint = tex2D(_Control, IN.uv_Control);
             float3 grass = tex2D(_Splat0, IN.uv_Splat0).rgb;
             float3 path = tex2D(_Splat1, IN.uv_Splat1).rgb;
+            float3 sand = tex2D(_Splat3, IN.uv_Splat3).rgb;
+            float sandWeight = min(paint.a, saturate(1 - paint.r - paint.g - paint.b));
 
-            o.Albedo = grass * paint.r + path * paint.g + rock * paint.b;
+            o.Albedo = grass * paint.r + path * paint.g + rock * paint.b + sand * sandWeight;
             o.Metallic = 0;
             o.Smoothness = 0.1;
             o.Alpha = 1;

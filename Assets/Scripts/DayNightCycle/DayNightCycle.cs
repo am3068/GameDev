@@ -1,5 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
 public class DayNightCycle : MonoBehaviour
@@ -8,7 +7,7 @@ public class DayNightCycle : MonoBehaviour
     public Light sun;
 
     [Header("Time Settings")]
-    public float dayLengthInSeconds = 120f;
+    [Min(1f)] public float dayLengthInSeconds = 240f;
 
     [Range(0f, 1f)]
     public float timeOfDay = 0.25f;
@@ -16,25 +15,36 @@ public class DayNightCycle : MonoBehaviour
     public int currentDay = 1;
     public float nightAmbientIntensity = 0.05f;
     public float dayAmbientIntensity = 1f;
+    public bool tintFogWithDaylight;
 
+    [SerializeField] private TMP_Text clockLabel;
+
+    private float elapsedInDay;
+    private int lastMinute = -1;
+    private Color daytimeFog;
 
     void Start()
     {
+        daytimeFog = RenderSettings.fogColor;
         UpdateSun();
+        UpdateClockLabel();
     }
 
     void Update()
     {
-        if (sun == null || dayLengthInSeconds <= 0f)
+        if (dayLengthInSeconds <= 0f)
             return;
 
-        timeOfDay += Time.deltaTime / dayLengthInSeconds;
+        float dayProgress = Time.deltaTime / dayLengthInSeconds;
+        timeOfDay = Mathf.Repeat(timeOfDay + dayProgress, 1f);
+        elapsedInDay += dayProgress;
 
-        if (timeOfDay >= 1f)
+        int completedDays = Mathf.FloorToInt(elapsedInDay);
+        if (completedDays > 0)
         {
-            timeOfDay -= 1f;
-            currentDay++;
-            Debug.Log("Day " + currentDay);
+            elapsedInDay -= completedDays;
+            currentDay += completedDays;
+            lastMinute = -1;
 
             EnemyHealth[] enemies = FindObjectsByType<EnemyHealth>(FindObjectsSortMode.None);
 
@@ -45,6 +55,7 @@ public class DayNightCycle : MonoBehaviour
         }
 
         UpdateSun();
+        UpdateClockLabel();
     }
 
     void UpdateSun()
@@ -55,9 +66,7 @@ public class DayNightCycle : MonoBehaviour
         float sunAngle = timeOfDay * 360f - 90f;
         sun.transform.rotation = Quaternion.Euler(sunAngle, 170f, 0f);
 
-        float daylight = Mathf.Clamp01(
-            Mathf.Sin(timeOfDay * Mathf.PI * 2f)
-        );
+        float daylight = Mathf.Clamp01(-Mathf.Cos(timeOfDay * Mathf.PI * 2f));
 
         sun.intensity = Mathf.Lerp(0.05f, 1f, daylight);
 
@@ -69,7 +78,22 @@ public class DayNightCycle : MonoBehaviour
             dayColor,
             daylight
         );
+        RenderSettings.ambientIntensity = Mathf.Lerp(nightAmbientIntensity, dayAmbientIntensity, daylight);
+        if (tintFogWithDaylight && RenderSettings.fog)
+            RenderSettings.fogColor = Color.Lerp(nightColor, daytimeFog, daylight);
+    }
 
+    void UpdateClockLabel()
+    {
+        if (!clockLabel)
+            return;
+
+        int minute = Mathf.FloorToInt(Mathf.Repeat(timeOfDay, 1f) * 1440f);
+        if (minute == lastMinute)
+            return;
+
+        lastMinute = minute;
+        clockLabel.text = $"Day {currentDay}   {minute / 60:00}:{minute % 60:00}";
     }
 }
 

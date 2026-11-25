@@ -25,6 +25,11 @@ public class ProceduralForestGenerator : MonoBehaviour
     public Transform[] objectParents;
     [Min(0)] public float objectGroundInset;
 
+    [Header("Shoreline")]
+    public Transform shorelineWater;
+    public TerrainLayer shorelineSand;
+    public Transform[] shorelineAccessPoints;
+
     [SerializeField, HideInInspector] byte[] savedPaths;
     [SerializeField, HideInInspector] int maskWidth, maskHeight;
 
@@ -110,7 +115,107 @@ public class ProceduralForestGenerator : MonoBehaviour
 
         terrain.SetHeights(0, 0, heights);
         PaintTerrain(terrain);
+        BlendShoreline();
         SnapObjectsToTerrain();
+    }
+
+    public void BlendShoreline()
+    {
+        if (!forestTerrain || !shorelineWater || !shorelineSand)
+            return;
+
+        TerrainData terrain = forestTerrain.terrainData;
+        Vector3 origin = forestTerrain.transform.position;
+        Vector3 size = terrain.size;
+        float sea = shorelineWater.position.y - origin.y;
+        if (sea <= 0 || sea >= size.y)
+            return;
+
+        int resolution = terrain.heightmapResolution;
+        float[,] heights = terrain.GetHeights(0, 0, resolution, resolution);
+        const float cornerRadius = 10f;
+        const float coastWidth = 12f;
+        float submerged = Mathf.Max(.015f, sea - .65f);
+        for (int z = 0; z < resolution; z++)
+        for (int x = 0; x < resolution; x++)
+        {
+            var point = new Vector2(x * size.x / (resolution - 1), z * size.z / (resolution - 1));
+            float distance = CoastDistance(point, size, cornerRadius);
+            if (distance >= coastWidth)
+                continue;
+
+            float accessDistance = float.MaxValue;
+            if (shorelineAccessPoints != null)
+                foreach (var access in shorelineAccessPoints)
+                    if (access)
+                    {
+                        Vector3 local = access.position - origin;
+                        accessDistance = Mathf.Min(accessDistance, Vector2.Distance(point, new Vector2(local.x, local.z)));
+                    }
+
+            float width = Mathf.Lerp(3.6f, coastWidth, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(6f, 23f, accessDistance)));
+            if (distance >= width)
+                continue;
+
+            float blend = Mathf.SmoothStep(0f, 1f, distance / width);
+            heights[z, x] = Mathf.Lerp(submerged / size.y, heights[z, x], blend);
+        }
+        terrain.SetHeights(0, 0, heights);
+        PaintShoreline(terrain, sea);
+    }
+
+    static float CoastDistance(Vector2 point, Vector3 terrainSize, float radius)
+    {
+        Vector2 half = new Vector2(terrainSize.x, terrainSize.z) * .5f;
+        var edge = new Vector2(Mathf.Abs(point.x - half.x), Mathf.Abs(point.y - half.y))
+            - half + Vector2.one * radius;
+        return radius - Vector2.Max(edge, Vector2.zero).magnitude - Mathf.Min(Mathf.Max(edge.x, edge.y), 0f);
+    }
+
+    public void RefreshShorelinePaint()
+    {
+        if (forestTerrain && shorelineWater && shorelineSand)
+            PaintShoreline(forestTerrain.terrainData, shorelineWater.position.y - forestTerrain.transform.position.y);
+    }
+
+    void PaintShoreline(TerrainData terrain, float sea)
+    {
+        int width = terrain.alphamapWidth;
+        int height = terrain.alphamapHeight;
+        var layers = terrain.terrainLayers;
+        int sand = System.Array.IndexOf(layers, shorelineSand);
+        var previous = terrain.GetAlphamaps(0, 0, width, height);
+        if (sand < 0)
+        {
+            sand = layers.Length;
+            System.Array.Resize(ref layers, layers.Length + 1);
+            layers[sand] = shorelineSand;
+            terrain.terrainLayers = layers;
+        }
+        int path = System.Array.IndexOf(layers, pathTexture);
+        var paint = new float[height, width, layers.Length];
+        for (int z = 0; z < height; z++)
+        for (int x = 0; x < width; x++)
+        {
+            float u = (float)x / (width - 1);
+            float v = (float)z / (height - 1);
+            float distance = CoastDistance(new Vector2(u * terrain.size.x, v * terrain.size.z), terrain.size, 10f);
+            float existingSand = sand < previous.GetLength(2) ? previous[z, x, sand] : 0f;
+            float beach = 0f;
+            if (distance < 14f)
+            {
+                float elevation = terrain.GetInterpolatedHeight(u, v);
+                beach = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(sea + 1.0f, sea + 2.8f, elevation));
+                beach *= 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(10f, 14f, distance));
+                if (path >= 0)
+                    beach *= 1f - previous[z, x, path];
+            }
+            float weight = Mathf.Max(existingSand, beach);
+            float remaining = existingSand < 1f ? (1f - weight) / (1f - existingSand) : 0f;
+            for (int layer = 0; layer < layers.Length; layer++)
+                paint[z, x, layer] = layer == sand ? weight : previous[z, x, layer] * remaining;
+        }
+        terrain.SetAlphamaps(0, 0, paint);
     }
 
     [ContextMenu("Save Path Mask")]
