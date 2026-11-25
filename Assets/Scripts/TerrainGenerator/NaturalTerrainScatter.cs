@@ -39,6 +39,7 @@ public class NaturalTerrainScatter : MonoBehaviour
     private readonly List<Batch> batches = new List<Batch>();
     private readonly List<Placement> placements = new List<Placement>();
     private readonly Dictionary<Material, Material> vegetationMaterials = new Dictionary<Material, Material>();
+    private CrystalShardSites shardSites;
 
     public void AddBatch(Kind kind, GameObject[] prefabs, BoxCollider[] exclusions, Transform parent,
         int count, int seed, float spacing, float pathClearance)
@@ -63,6 +64,7 @@ public class NaturalTerrainScatter : MonoBehaviour
             AddBatch(Kind.Litter, trailLitterPrefabs, trees.exclusions, trees.parent, trailLitterCount, trees.seed + 41, .8f, .12f);
 
         var generator = GetComponentInParent<ProceduralForestGenerator>();
+        shardSites = GetComponent<CrystalShardSites>();
         batches.Sort((left, right) => left.kind.CompareTo(right.kind));
         foreach (var batch in batches)
             Scatter(batch, terrain, paint, generator);
@@ -130,6 +132,7 @@ public class NaturalTerrainScatter : MonoBehaviour
             if (batch.kind == Kind.Litter && !OnTrail(paint, data.size, x, z, radius + 2.6f))
                 continue;
             if (InsideExclusion(batch.exclusions, ground, radius) ||
+                (shardSites && shardSites.IsInClearing(ground, radius)) ||
                 OnTrail(paint, data.size, x, z, radius + batch.pathClearance) ||
                 TooClose(batch, point, radius))
                 continue;

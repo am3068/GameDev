@@ -23,6 +23,7 @@ public class ProceduralForestGenerator : MonoBehaviour
     [Range(0, 90)] public float rockSteepness = 45f;
     public bool smoothPathTransitions;
     [Min(1)] public float pathShoulderWidth = 5f;
+    [Min(0)] public float trailEdgeInset;
     [Range(0, 1)] public float trailSnowCoverage;
 
     [Header("Objects")]
@@ -131,7 +132,7 @@ public class ProceduralForestGenerator : MonoBehaviour
         {
             float u = x / (float)(width - 1);
             float v = z / (float)(height - 1);
-            float originalPath = GetPath(u, v);
+            float originalPath = GetNarrowedPath(terrain, u, v);
             if (originalPath <= 0f || paint[z, x, path] <= 0f)
                 continue;
 
@@ -341,7 +342,7 @@ public class ProceduralForestGenerator : MonoBehaviour
                 float u = (float)x / (width - 1);
                 float v = (float)z / (height - 1);
 
-                float path = GetPath(u, v);
+                float path = GetNarrowedPath(terrain, u, v);
                 float slope = terrain.GetSteepness(u, v);
                 float rockWeight = smoothPathTransitions
                     ? Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(rockSteepness - 6f, rockSteepness + 6f, slope))
@@ -355,6 +356,56 @@ public class ProceduralForestGenerator : MonoBehaviour
         }
 
         terrain.SetAlphamaps(0, 0, paint);
+    }
+
+    [ContextMenu("Narrow Painted Trails")]
+    public void NarrowPaintedTrails()
+    {
+        if (!forestTerrain || !HasMask() || trailEdgeInset <= 0f)
+            return;
+
+        var terrain = forestTerrain.terrainData;
+        int ground = System.Array.IndexOf(terrain.terrainLayers, grassTexture);
+        int path = System.Array.IndexOf(terrain.terrainLayers, pathTexture);
+        if (ground < 0 || path < 0 || ground == path)
+            return;
+
+        int width = terrain.alphamapWidth;
+        int height = terrain.alphamapHeight;
+        var paint = terrain.GetAlphamaps(0, 0, width, height);
+        for (int z = 0; z < height; z++)
+        for (int x = 0; x < width; x++)
+        {
+            if (paint[z, x, path] <= 0f)
+                continue;
+
+            float u = x / (float)(width - 1);
+            float v = z / (float)(height - 1);
+            if (GetPath(u, v) <= 0f)
+                continue;
+            float removed = Mathf.Max(0f, paint[z, x, path] - GetNarrowedPath(terrain, u, v));
+            paint[z, x, path] -= removed;
+            paint[z, x, ground] += removed;
+        }
+        terrain.SetAlphamaps(0, 0, paint);
+    }
+
+    private float GetNarrowedPath(TerrainData terrain, float u, float v)
+    {
+        float weight = GetPath(u, v);
+        if (weight <= 0f || trailEdgeInset <= 0f)
+            return weight;
+
+        float dx = trailEdgeInset / terrain.size.x;
+        float dz = trailEdgeInset / terrain.size.z;
+        for (int direction = 0; direction < 8; direction++)
+        {
+            float angle = direction * Mathf.PI / 4f;
+            float x = Mathf.Clamp01(u + Mathf.Cos(angle) * dx);
+            float z = Mathf.Clamp01(v + Mathf.Sin(angle) * dz);
+            weight = Mathf.Min(weight, GetPath(x, z));
+        }
+        return weight;
     }
 
     float[,] FindPathDistances(TerrainData terrain)

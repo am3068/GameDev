@@ -19,6 +19,8 @@ public class EnemyHealth : MonoBehaviour
     private Renderer[] enemyRenderers;
     private Color[] originalColors;
     private Coroutine flashCoroutine;
+    public bool CanRespawn { get; set; } = true;
+    public GameObject ForestGemPrefab { get; set; }
 
     void Start()
     {
@@ -114,11 +116,14 @@ public class EnemyHealth : MonoBehaviour
             rb.velocity = Vector3.zero;
             rb.isKinematic = true;
         }
+
+        if (ForestGemPrefab)
+            PortalGemPickup.DropForestGem(ForestGemPrefab, transform.position, enemyAI ? enemyAI.PatrolGround : null);
     }
 
     public void Respawn()
     {
-        if (!isDead) return;
+        if (!isDead || !CanRespawn) return;
 
         currentHealth = maxHealth;
         isDead = false;

@@ -35,7 +35,7 @@ public class EnemyBullet : MonoBehaviour
             return;
         }
 
-        if (other.gameObject.layer == LayerMask.NameToLayer("Obstacle") ||
+        if (other is TerrainCollider || other.gameObject.layer == LayerMask.NameToLayer("Obstacle") ||
             other.gameObject.layer == LayerMask.NameToLayer("Ground"))
         {
             Destroy(gameObject);

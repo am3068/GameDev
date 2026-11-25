@@ -42,6 +42,16 @@ public class EnemyBehaviourAI : MonoBehaviour
     private Rigidbody rb;
     private bool playerDetected;
     private float desiredHeight;
+    private Vector3 patrolCenter;
+    private float patrolRadius;
+    public Collider PatrolGround { get; private set; }
+
+    public void SetPatrolArea(Collider ground, Vector3 center, float radius)
+    {
+        PatrolGround = ground;
+        patrolCenter = center;
+        patrolRadius = radius;
+    }
 
     private void Awake()
     {
@@ -171,7 +181,9 @@ public class EnemyBehaviourAI : MonoBehaviour
             origin,
             rayDirection.normalized,
             out RaycastHit hit,
-            rayDirection.magnitude))
+            rayDirection.magnitude,
+            Physics.DefaultRaycastLayers,
+            QueryTriggerInteraction.Ignore))
         {
             playerDetected =
                 hit.collider.CompareTag(playerTag) ||
@@ -214,6 +226,8 @@ public class EnemyBehaviourAI : MonoBehaviour
             transform.forward * speed * Time.fixedDeltaTime;
 
         Vector3 newPosition = rb.position + movement;
+        if (!WithinPatrolArea(newPosition))
+            return;
         newPosition.y = desiredHeight;
 
         rb.MovePosition(newPosition);
@@ -223,12 +237,7 @@ public class EnemyBehaviourAI : MonoBehaviour
     {
         Vector3 rayStart = rb.position + Vector3.up * 0.5f;
 
-        if (Physics.Raycast(
-            rayStart,
-            Vector3.down,
-            out RaycastHit hit,
-            25f,
-            groundLayerMask))
+        if (FindGround(rayStart, 25f, out var hit))
         {
             desiredHeight = Mathf.Lerp(
                 desiredHeight,
@@ -249,12 +258,25 @@ public class EnemyBehaviourAI : MonoBehaviour
             transform.forward * edgeOffsetForward +
             Vector3.up * 0.5f;
 
-        return Physics.Raycast(
-            rayOrigin,
-            Vector3.down,
-            edgeRayLength,
-            groundLayerMask
-        );
+        return WithinPatrolArea(rayOrigin) && FindGround(rayOrigin, edgeRayLength, out _);
+    }
+
+    private bool FindGround(Vector3 origin, float distance, out RaycastHit hit)
+    {
+        var ray = new Ray(origin, Vector3.down);
+        return PatrolGround
+            ? PatrolGround.Raycast(ray, out hit, distance)
+            : Physics.Raycast(ray, out hit, distance, groundLayerMask, QueryTriggerInteraction.Ignore);
+    }
+
+    private bool WithinPatrolArea(Vector3 position)
+    {
+        if (!PatrolGround)
+            return true;
+
+        Vector3 offset = position - patrolCenter;
+        offset.y = 0;
+        return offset.sqrMagnitude <= patrolRadius * patrolRadius;
     }
 
     private bool IsPathBlocked()
@@ -265,7 +287,8 @@ public class EnemyBehaviourAI : MonoBehaviour
             origin,
             transform.forward,
             obstacleDetectionDistance,
-            obstacleLayerMask
+            obstacleLayerMask,
+            QueryTriggerInteraction.Ignore
         );
     }
 

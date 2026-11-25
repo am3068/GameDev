@@ -3,22 +3,27 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 [RequireComponent(typeof(Terrain))]
+[DefaultExecutionOrder(200)]
 public class TerrainGrassFX : MonoBehaviour
 {
     [SerializeField] private Material grassMaterial;
     [SerializeField] private BoxCollider[] noGrassZones;
     [SerializeField] private Color tipColour = new Color(.40f, .53f, .26f);
-    [SerializeField, Range(1, 3)] private int growthLayers = 1;
+    [SerializeField, Range(1, 4)] private int growthLayers = 1;
+    [SerializeField, Min(.01f)] private float bladeHeight = .27f;
+    [SerializeField, Min(0f)] private float bladeHeightVariation = .11f;
+    [SerializeField, Min(.01f)] private float bladeWidth = .038f;
 
     private const int CellsPerPatch = 8;
     private const float CellWidth = 1f;
     private static readonly Vector2[] LayerOffsets =
     {
-        Vector2.zero, new Vector2(.36f, .30f), new Vector2(-.34f, .55f)
+        Vector2.zero, new Vector2(.36f, .30f), new Vector2(-.34f, .55f), new Vector2(.48f, -.37f)
     };
     private readonly List<Mesh> meshes = new List<Mesh>();
     private Material instanceMaterial;
     private GameObject root;
+    private CrystalShardSites shardSites;
 
     private void Start()
     {
@@ -30,13 +35,14 @@ public class TerrainGrassFX : MonoBehaviour
         if (!data || data.alphamapLayers < 2)
             return;
 
+        shardSites = GetComponent<CrystalShardSites>();
         instanceMaterial = new Material(grassMaterial) { name = "Terrain grass (runtime)" };
         instanceMaterial.SetColor("_TopColor", tipColour);
         instanceMaterial.SetColor("_BottomColor", new Color(.12f, .19f, .075f));
-        instanceMaterial.SetFloat("_BladeHeight", .27f);
-        instanceMaterial.SetFloat("_BladeHeightRandom", .11f);
-        instanceMaterial.SetFloat("_BladeWidth", .026f);
-        instanceMaterial.SetFloat("_BladeWidthRandom", .011f);
+        instanceMaterial.SetFloat("_BladeHeight", bladeHeight);
+        instanceMaterial.SetFloat("_BladeHeightRandom", bladeHeightVariation);
+        instanceMaterial.SetFloat("_BladeWidth", bladeWidth);
+        instanceMaterial.SetFloat("_BladeWidthRandom", .012f);
         instanceMaterial.SetFloat("_WindStrength", .025f);
         instanceMaterial.SetFloat("_TranslucentGain", .25f);
         instanceMaterial.SetFloat("_ViewLOD", 32f);
@@ -93,7 +99,7 @@ public class TerrainGrassFX : MonoBehaviour
                 tangents[index] = new Vector4(tangent.x, tangent.y, tangent.z, 1f);
                 allowed[index] = IsGrass(data, paint, u, v);
                 float meadow = Mathf.PerlinNoise(vertices[index].x * .12f + 13f, vertices[index].z * .12f + 7f);
-                float patchDensity = Mathf.Lerp(.66f, 1f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.22f, .76f, meadow)));
+                float patchDensity = Mathf.Lerp(.81f, 1f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.22f, .76f, meadow)));
                 density[index] = new Color(patchDensity, 0, 0, 1);
             }
 
@@ -115,7 +121,7 @@ public class TerrainGrassFX : MonoBehaviour
         mesh.colors = density;
         mesh.SetTriangles(indices, 0);
         var bounds = mesh.bounds;
-        bounds.Expand(1.4f);
+        bounds.Expand(2f * Mathf.Max(.7f, bladeHeight + bladeHeightVariation + .25f));
         mesh.bounds = bounds;
         meshes.Add(mesh);
         var patch = new GameObject("Grass patch");
@@ -143,6 +149,9 @@ public class TerrainGrassFX : MonoBehaviour
         int x = Mathf.RoundToInt(u * (paint.GetLength(1) - 1));
         int z = Mathf.RoundToInt(v * (paint.GetLength(0) - 1));
         if (paint[z, x, 0] < .76f || paint[z, x, 1] > .20f || data.GetSteepness(u, v) > 31f)
+            return false;
+
+        if (shardSites && shardSites.IsInClearing(transform.TransformPoint(new Vector3(u * data.size.x, 0f, v * data.size.z))))
             return false;
 
         if (noGrassZones != null)

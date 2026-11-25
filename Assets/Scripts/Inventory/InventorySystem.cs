@@ -19,6 +19,12 @@ public class InventorySystem : MonoBehaviour
         if (!target || !target.gameObject.activeInHierarchy)
             return null;
 
+        if (target.TryGetComponent<CrystalShard>(out var shard))
+            return shard.ItemName;
+
+        if (target.TryGetComponent<PortalGemPickup>(out _))
+            return PortalGemPickup.ForestGem;
+
         switch (target.tag)
         {
             case "wood": return "Wood";
@@ -56,6 +62,27 @@ public class InventorySystem : MonoBehaviour
         target.gameObject.SetActive(false);
     }
 
+    public int CountItem(string item)
+    {
+        int slot = itemNames.IndexOf(item);
+        return slot >= 0 ? itemCounts[slot] : 0;
+    }
+
+    public bool TrySpend(string item, int amount)
+    {
+        int slot = itemNames.IndexOf(item);
+        if (amount <= 0 || slot < 0 || itemCounts[slot] < amount)
+            return false;
+
+        itemCounts[slot] -= amount;
+        if (itemCounts[slot] == 0)
+        {
+            itemNames.RemoveAt(slot);
+            itemCounts.RemoveAt(slot);
+        }
+        return true;
+    }
+
     public void UseItemInSlot(int slot)
     {
         if (survival == null || survival.IsDead)
@@ -85,13 +112,7 @@ public class InventorySystem : MonoBehaviour
             return;
         }
 
-        itemCounts[slot]--;
-
-        if (itemCounts[slot] == 0)
-        {
-            itemNames.RemoveAt(slot);
-            itemCounts.RemoveAt(slot);
-        }
+        TrySpend(item, 1);
     }
 
     public int GetSlotCount()

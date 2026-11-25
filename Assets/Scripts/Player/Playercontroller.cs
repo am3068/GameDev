@@ -35,6 +35,7 @@ public class PlayerController : MonoBehaviour
     private const float PortalInteractionRange = 2f;
     private const float BookMarkerRange = 6f;
     private const float PortalMarkerRange = 12f;
+    private const float CrystalMarkerRange = 12f;
     private readonly RaycastHit[] interactionHits = new RaycastHit[32];
     private readonly InteractionDisplay interactionDisplay = new InteractionDisplay();
     private PortalFogVisibility[] portals;
@@ -179,7 +180,7 @@ public class PlayerController : MonoBehaviour
         else if (portalTarget)
         {
             interactionFrame = Time.frameCount;
-            portalTarget.Activate();
+            portalTarget.TryActivate(inventory);
             UpdateInteractionTarget();
         }
     }
@@ -247,7 +248,7 @@ public class PlayerController : MonoBehaviour
         }
 
         if (portalTarget)
-            interactionPrompt = portalTarget.IsActivated ? null : "[E] Activate portal";
+            interactionPrompt = portalTarget.GetInteractionPrompt(inventory);
     }
 
     private void OnGUI()
@@ -279,6 +280,15 @@ public class PlayerController : MonoBehaviour
                         portal.GetApproachDistanceSquared(transform.position) < PortalMarkerRange * PortalMarkerRange)
                         DrawInteractionMarker(portal.InteractionMarkerPosition, portal.transform);
                 }
+            }
+
+            var crystalMarkers = CrystalPickupMarker.Active;
+            for (int i = 0; i < crystalMarkers.Count; i++)
+            {
+                var marker = crystalMarkers[i];
+                Vector3 position = marker.Position;
+                if ((position - interactionCamera.transform.position).sqrMagnitude <= CrystalMarkerRange * CrystalMarkerRange)
+                    DrawInteractionMarker(position, marker.transform);
             }
         }
 

@@ -1320,7 +1320,7 @@ GameObject:
   m_Component:
   - component: {fileID: 116339823}
   m_Layer: 0
-  m_Name: 'Enemy '
+  m_Name: Legacy Test Enemies
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1870,6 +1870,8 @@ GameObject:
   - component: {fileID: 176357633}
   - component: {fileID: 176357634}
   - component: {fileID: 176357636}
+  - component: {fileID: 2260301102}
+  - component: {fileID: 2260301202}
   m_Layer: 0
   m_Name: SnowTerrain
   m_TagString: Untagged
@@ -1952,6 +1954,39 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1927291415}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2260301202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 176357632}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89d5b7365e584a55a36de2aac5c31c30, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  enemyPrefab: {fileID: 7580117437538868617, guid: 4ebf6ec99376e4e54aee34252c9374cd, type: 3}
+  roamingEnemies: 5
+  forestGemPrefab: {fileID: 0}
+--- !u!114 &2260301102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 176357632}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65afa25153f74644ac385d49645b69e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  kind: 1
+  crystalPrefab: {fileID: 1916132114430185883, guid: f2e661772314c23499b71ee07d9c4505, type: 3}
+  sites:
+  - {x: 0.2, y: 0.76}
+  - {x: 0.57, y: 0.56}
+  - {x: 0.78, y: 0.28}
 --- !u!114 &176357636
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2031,6 +2066,7 @@ MonoBehaviour:
   rockSteepness: 44.3
   smoothPathTransitions: 1
   pathShoulderWidth: 5
+  trailEdgeInset: 0.6
   trailSnowCoverage: 0
   objectParents:
   - {fileID: 1013996903}
@@ -2527,8 +2563,31 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 6550291901621143074, guid: 3380704799bbd417cb1f0e219e9d6de2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2260301210}
   m_SourcePrefab: {fileID: 100100000, guid: 3380704799bbd417cb1f0e219e9d6de2, type: 3}
+--- !u!1 &2260301211 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6550291901621143074, guid: 3380704799bbd417cb1f0e219e9d6de2, type: 3}
+  m_PrefabInstance: {fileID: 226909068}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2260301210
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2260301211}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b132ef0847c0543ec8b6dd019b7be6a2, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  playerCamera: {fileID: 0}
+  attackRange: 2.6
+  attackDamage: 25
 --- !u!114 &226909069 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 3592716065310682366, guid: 3380704799bbd417cb1f0e219e9d6de2, type: 3}
@@ -3599,7 +3658,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 198076315508196090, guid: 73399caca0253684aad5b9623327816f, type: 3}
       propertyPath: InitialModule.maxNumParticles
-      value: 800
+      value: 350
       objectReference: {fileID: 0}
     - target: {fileID: 198076315508196090, guid: 73399caca0253684aad5b9623327816f, type: 3}
       propertyPath: InitialModule.startSpeed.scalar
@@ -3607,7 +3666,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 198076315508196090, guid: 73399caca0253684aad5b9623327816f, type: 3}
       propertyPath: EmissionModule.rateOverTime.scalar
-      value: 93
+      value: 42
       objectReference: {fileID: 0}
     - target: {fileID: 198076315508196090, guid: 73399caca0253684aad5b9623327816f, type: 3}
       propertyPath: InitialModule.startLifetime.scalar
@@ -9588,6 +9647,7 @@ GameObject:
   - component: {fileID: 1120337524}
   - component: {fileID: 1120337526}
   - component: {fileID: 1120337527}
+  - component: {fileID: 2260301200}
   m_Layer: 0
   m_Name: StartingTerrain
   m_TagString: Untagged
@@ -9595,6 +9655,22 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 2147483647
   m_IsActive: 1
+--- !u!114 &2260301200
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1120337522}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89d5b7365e584a55a36de2aac5c31c30, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  enemyPrefab: {fileID: 7580117437538868617, guid: 4ebf6ec99376e4e54aee34252c9374cd, type: 3}
+  roamingEnemies: 0
+  forestGemPrefab: {fileID: 6108449227501448965, guid: 50adfd0b9a981314190c1eb0183cc686, type: 3}
+  guardianPortal: {fileID: 1706956890}
 --- !u!4 &1120337523
 Transform:
   m_ObjectHideFlags: 0
@@ -9706,7 +9782,8 @@ MonoBehaviour:
   - {fileID: 1574459551}
   - {fileID: 1560432066}
   tipColour: {r: 0.41, g: 0.51, b: 0.25, a: 1}
-  growthLayers: 2
+  growthLayers: 3
+  bladeWidth: 0.075
 --- !u!1 &1120803775
 GameObject:
   m_ObjectHideFlags: 0
@@ -10200,6 +10277,7 @@ MonoBehaviour:
   - {fileID: 1245855030}
   island: {fileID: 176357633}
   islandBeacon: {fileID: 1232996075}
+  requiredGem: 2
 --- !u!1 &1186418252
 GameObject:
   m_ObjectHideFlags: 0
@@ -10610,6 +10688,7 @@ MonoBehaviour:
   - {fileID: 716144049}
   island: {fileID: 1120337525}
   islandBeacon: {fileID: 110242350}
+  requiredGem: 2
 --- !u!1 &1230008360
 GameObject:
   m_ObjectHideFlags: 0
@@ -11484,6 +11563,7 @@ MonoBehaviour:
   rockSteepness: 32
   smoothPathTransitions: 1
   pathShoulderWidth: 6
+  trailEdgeInset: 0.75
   trailSnowCoverage: 0
   objectParents:
   - {fileID: 229232086}
@@ -13328,6 +13408,7 @@ MonoBehaviour:
   - {fileID: 284126471}
   island: {fileID: 1949728310}
   islandBeacon: {fileID: 194147140}
+  requiredGem: 1
 --- !u!1001 &1466879636
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -13899,6 +13980,7 @@ MonoBehaviour:
   - {fileID: 1614401983}
   island: {fileID: 1120337525}
   islandBeacon: {fileID: 111500123}
+  requiredGem: 3
 --- !u!23 &1521316669 stripped
 MeshRenderer:
   m_CorrespondingSourceObject: {fileID: 6223553936845113312, guid: a68d827fdb3048e46928bff7883c7c2c, type: 3}
@@ -15431,6 +15513,7 @@ MonoBehaviour:
   - {fileID: 1870944440}
   island: {fileID: 1120337525}
   islandBeacon: {fileID: 291741131}
+  requiredGem: 4
 --- !u!1001 &1722233265
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15760,7 +15843,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9165240852180130840, guid: 4ebf6ec99376e4e54aee34252c9374cd, type: 3}
       propertyPath: m_Name
-      value: Enemy
+      value: Test Enemy
       objectReference: {fileID: 0}
     - target: {fileID: 9165240852180130840, guid: 4ebf6ec99376e4e54aee34252c9374cd, type: 3}
       propertyPath: m_Layer
@@ -18333,6 +18416,7 @@ MonoBehaviour:
   smoothPathTransitions: 1
   pathShoulderWidth: 6
   trailSnowCoverage: 0.67
+  trailEdgeInset: 0.65
   objectParents:
   - {fileID: 455191571}
   objectGroundInset: 0.72
@@ -18543,6 +18627,8 @@ GameObject:
   - component: {fileID: 1949728311}
   - component: {fileID: 1949728313}
   - component: {fileID: 1949728314}
+  - component: {fileID: 2260301101}
+  - component: {fileID: 2260301201}
   m_Layer: 0
   m_Name: ForestTerrain
   m_TagString: Untagged
@@ -18645,6 +18731,39 @@ MonoBehaviour:
   trailLitterCount: 137
   treeCanopySpacing: 0.59
   foggedVegetation: {fileID: 4800000, guid: 64f6bc35d2a836d4880b78005c74ef75, type: 3}
+--- !u!114 &2260301201
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1949728309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89d5b7365e584a55a36de2aac5c31c30, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  enemyPrefab: {fileID: 7580117437538868617, guid: 4ebf6ec99376e4e54aee34252c9374cd, type: 3}
+  roamingEnemies: 6
+  forestGemPrefab: {fileID: 0}
+--- !u!114 &2260301101
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1949728309}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65afa25153f74644ac385d49645b69e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  kind: 0
+  crystalPrefab: {fileID: 3084226895834852923, guid: e40bc2e4674067c47b1464bed1a411e4, type: 3}
+  sites:
+  - {x: 0.24, y: 0.59}
+  - {x: 0.47, y: 0.42}
+  - {x: 0.79, y: 0.33}
 --- !u!114 &1949728314
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -18661,7 +18780,10 @@ MonoBehaviour:
   noGrassZones:
   - {fileID: 585740546}
   tipColour: {r: 0.3, g: 0.44, b: 0.2, a: 1}
-  growthLayers: 3
+  growthLayers: 4
+  bladeHeight: 0.85
+  bladeHeightVariation: 0.22
+  bladeWidth: 0.082
 --- !u!1001 &1957814120
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -19056,6 +19178,7 @@ MonoBehaviour:
   - {fileID: 775802046}
   island: {fileID: 1120337525}
   islandBeacon: {fileID: 845308587}
+  requiredGem: 1
 --- !u!1 &2007906349
 GameObject:
   m_ObjectHideFlags: 0

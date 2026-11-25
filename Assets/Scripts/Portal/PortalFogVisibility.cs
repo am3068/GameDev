@@ -2,16 +2,24 @@ using UnityEngine;
 
 public class PortalFogVisibility : MonoBehaviour
 {
+    public enum Gem { None, Forest, Snow, Desert, Volcano }
+
     [SerializeField] private Transform viewer;
     [SerializeField] private Renderer[] geometry;
     [SerializeField] private Terrain island;
     [SerializeField] private Renderer islandBeacon;
+    [SerializeField] private Gem requiredGem;
     private Transform glow;
     private PortalTeleport teleporter;
     private Collider teleportTrigger;
 
     public bool IsActivated { get; private set; }
     public Vector3 InteractionMarkerPosition => transform.TransformPoint(new Vector3(0f, 1.15f, -.4f));
+    private string GemName => requiredGem == Gem.Forest ? PortalGemPickup.ForestGem : requiredGem + " Gem";
+    private string ShardName => requiredGem + " Crystal Shard";
+    private bool UsesShards => requiredGem != Gem.None && requiredGem != Gem.Forest;
+    private bool HasDestination => teleporter && teleporter.destination;
+    private const int ShardsPerGem = 3;
 
     private void Awake()
     {
@@ -39,7 +47,7 @@ public class PortalFogVisibility : MonoBehaviour
             position.y = frame.sharedMesh.bounds.max.y + .38f + islandBeacon.transform.localScale.y * .5f;
             islandBeacon.transform.localPosition = position;
         }
-        islandBeacon.enabled = true;
+        islandBeacon.enabled = IsActivated;
     }
 
     public float GetApproachDistanceSquared(Vector3 playerPosition)
@@ -51,18 +59,45 @@ public class PortalFogVisibility : MonoBehaviour
         return (playerPosition - approach).sqrMagnitude;
     }
 
-    public void Activate()
+    public string GetInteractionPrompt(InventorySystem inventory)
     {
         if (IsActivated)
-            return;
+            return null;
+
+        if (requiredGem != Gem.None)
+        {
+            bool hasGem = inventory && inventory.CountItem(GemName) > 0;
+            int shards = UsesShards && inventory ? inventory.CountItem(ShardName) : 0;
+            if (!hasGem && shards < ShardsPerGem)
+                return UsesShards
+                    ? $"[E] Portal locked. Missing {GemName} ({shards}/{ShardsPerGem} shards)"
+                    : $"[E] Portal locked. Missing {GemName}";
+
+            if (!HasDestination)
+                return "Portal locked. Destination unavailable";
+            if (!hasGem)
+                return $"[E] Craft and use {GemName}";
+        }
+        return requiredGem == Gem.None ? "[E] Activate portal" : $"[E] Use {GemName}";
+    }
+
+    public bool TryActivate(InventorySystem inventory)
+    {
+        if (IsActivated)
+            return true;
+
+        if (requiredGem != Gem.None && (!HasDestination || !inventory ||
+            (!inventory.TrySpend(GemName, 1) && (!UsesShards || !inventory.TrySpend(ShardName, ShardsPerGem)))))
+            return false;
 
         SetActivation(true);
-        if (teleporter && teleporter.destination)
+        if (HasDestination)
         {
             var returnPortal = teleporter.destination.GetComponentInParent<PortalFogVisibility>();
             if (returnPortal && !returnPortal.IsActivated)
                 returnPortal.SetActivation(true);
         }
+        return true;
     }
 
     private void SetActivation(bool active)
@@ -72,6 +107,8 @@ public class PortalFogVisibility : MonoBehaviour
             glow.gameObject.SetActive(active);
         if (teleportTrigger)
             teleportTrigger.enabled = active;
+        if (islandBeacon)
+            islandBeacon.enabled = active;
 
         if (geometry == null)
             return;

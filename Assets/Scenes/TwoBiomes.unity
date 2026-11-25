@@ -533,7 +533,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2270153738499545236, guid: c0b36b910f521493f8d1baadc23d5a65, type: 3}
       propertyPath: m_Name
-      value: Enemy (4)
+      value: Test Enemy (4)
       objectReference: {fileID: 0}
     - target: {fileID: 2270153738499545236, guid: c0b36b910f521493f8d1baadc23d5a65, type: 3}
       propertyPath: m_Layer
@@ -3293,7 +3293,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4945538583363256272, guid: bf2818e918aa84d3c84b5dd6a07638ad, type: 3}
       propertyPath: m_Name
-      value: Enemy (5)
+      value: Test Enemy (5)
       objectReference: {fileID: 0}
     - target: {fileID: 4945538583363256272, guid: bf2818e918aa84d3c84b5dd6a07638ad, type: 3}
       propertyPath: m_Layer
@@ -4142,7 +4142,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3269199487335795192, guid: ae225b7705a244d259e1c09d48daab0b, type: 3}
       propertyPath: m_Name
-      value: Enemy (2)
+      value: Test Enemy (2)
       objectReference: {fileID: 0}
     - target: {fileID: 3269199487335795192, guid: ae225b7705a244d259e1c09d48daab0b, type: 3}
       propertyPath: m_Layer
@@ -8485,7 +8485,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1553081189238824198, guid: 9beaafde1f78a4aed8330b4662901948, type: 3}
       propertyPath: m_Name
-      value: Enemy (3)
+      value: Test Enemy (3)
       objectReference: {fileID: 0}
     - target: {fileID: 1553081189238824198, guid: 9beaafde1f78a4aed8330b4662901948, type: 3}
       propertyPath: m_Layer
@@ -8748,7 +8748,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 9165240852180130840, guid: 4ebf6ec99376e4e54aee34252c9374cd, type: 3}
       propertyPath: m_Name
-      value: Enemy
+      value: Test Enemy
       objectReference: {fileID: 0}
     - target: {fileID: 9165240852180130840, guid: 4ebf6ec99376e4e54aee34252c9374cd, type: 3}
       propertyPath: m_Layer
@@ -9963,6 +9963,8 @@ GameObject:
   - component: {fileID: 1871944114}
   - component: {fileID: 1871944113}
   - component: {fileID: 1871944112}
+  - component: {fileID: 2260301103}
+  - component: {fileID: 2260301203}
   m_Layer: 7
   m_Name: DesertGround
   m_TagString: Untagged
@@ -10042,6 +10044,39 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1871944111}
   m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!114 &2260301203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871944111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 89d5b7365e584a55a36de2aac5c31c30, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  enemyPrefab: {fileID: 7580117437538868617, guid: 4ebf6ec99376e4e54aee34252c9374cd, type: 3}
+  roamingEnemies: 4
+  forestGemPrefab: {fileID: 0}
+--- !u!114 &2260301103
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1871944111}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65afa25153f74644ac385d49645b69e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  kind: 2
+  crystalPrefab: {fileID: 5575030985936643637, guid: a68d827fdb3048e46928bff7883c7c2c, type: 3}
+  sites:
+  - {x: 0.24, y: 0.24}
+  - {x: 0.66, y: 0.46}
+  - {x: 0.38, y: 0.78}
 --- !u!4 &1871944115
 Transform:
   m_ObjectHideFlags: 0
@@ -10997,7 +11032,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 6735826399030969493, guid: 2aa57aa03214f488d81200e47460c34d, type: 3}
       propertyPath: m_Name
-      value: Enemy (1)
+      value: Test Enemy (1)
       objectReference: {fileID: 0}
     - target: {fileID: 6735826399030969493, guid: 2aa57aa03214f488d81200e47460c34d, type: 3}
       propertyPath: m_Layer
