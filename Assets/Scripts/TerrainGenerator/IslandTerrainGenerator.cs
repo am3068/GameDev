@@ -14,6 +14,9 @@ public class ProceduralForestGenerator : MonoBehaviour
     public float hillHeight = 10f;
     public float mountainHeight = 15f;
     public bool addMountains = true;
+    public bool useSingleMountain;
+    public Vector2 mountainCenter = new Vector2(.52f, .66f);
+    [Range(.05f, .5f)] public float mountainRadius = .24f;
 
     [Header("Paths")]
     [Min(1)] public float mountainPathClearance = 15f;
@@ -88,21 +91,7 @@ public class ProceduralForestGenerator : MonoBehaviour
                     height = Mathf.Lerp(trailHeight, height, shoulder);
                 }
 
-                // mountains get taller towards the edges
-                float edgeDistance = Mathf.Min(u, 1f - u, v, 1f - v);
-                float mountains = (1f - Mathf.SmoothStep(
-                    0.06f, 0.32f, edgeDistance)) * mountainHeight;
-
-                mountains *= 0.5f + Mathf.PerlinNoise(
-                    u * 6f + noiseOffset + 300f,
-                    v * 6f + noiseOffset + 300f) * 0.5f;
-
-                // extra mountains between paths
-                if (addMountains)
-                    mountains +=
-                        Mountain(u, v, 0.48f, 0.63f, 0.18f) * 18f +
-                        Mountain(u, v, 0.43f, 0.29f, 0.12f) * 15f +
-                        Mountain(u, v, 0.63f, 0.24f, 0.10f) * 10f;
+                float mountains = MountainHeight(u, v, noiseOffset);
 
                 // mountains fade out before reaching paths
                 float clearance = Mathf.SmoothStep(0f, 1f,
@@ -117,6 +106,34 @@ public class ProceduralForestGenerator : MonoBehaviour
         PaintTerrain(terrain);
         BlendShoreline();
         SnapObjectsToTerrain();
+    }
+
+    float MountainHeight(float u, float v, float noiseOffset)
+    {
+        if (useSingleMountain)
+        {
+            if (!addMountains)
+                return 0f;
+
+            var offset = (new Vector2(u, v) - mountainCenter) / mountainRadius;
+            var ridge = new Vector2((.85f * offset.x + .52f * offset.y) * .82f,
+                (-.52f * offset.x + .85f * offset.y) * 1.16f);
+            float volume = 1f - Mathf.SmoothStep(0f, 1f, ridge.magnitude);
+            float relief = Noise(u, v, 17f, noiseOffset + 710f) * .14f
+                + Noise(u, v, 39f, noiseOffset + 770f) * .04f;
+            return Mathf.Max(0f, volume + relief * 4f * volume * (1f - volume)) * mountainHeight;
+        }
+
+        float edgeDistance = Mathf.Min(u, 1f - u, v, 1f - v);
+        float mountains = (1f - Mathf.SmoothStep(0.06f, 0.32f, edgeDistance)) * mountainHeight;
+        mountains *= 0.5f + Mathf.PerlinNoise(u * 6f + noiseOffset + 300f, v * 6f + noiseOffset + 300f) * 0.5f;
+
+        if (addMountains)
+            mountains += Mountain(u, v, 0.48f, 0.63f, 0.18f) * 18f +
+                Mountain(u, v, 0.43f, 0.29f, 0.12f) * 15f +
+                Mountain(u, v, 0.63f, 0.24f, 0.10f) * 10f;
+
+        return mountains;
     }
 
     public void BlendShoreline()
