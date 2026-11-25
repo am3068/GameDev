@@ -60,6 +60,8 @@ public class DayNightCycle : MonoBehaviour
 
     void UpdateSun()
     {
+        Shader.SetGlobalFloat("_SceneryFogEnd", RenderSettings.fog && RenderSettings.fogMode == FogMode.Linear
+            ? RenderSettings.fogEndDistance : 0f);
         if (sun == null)
             return;
 

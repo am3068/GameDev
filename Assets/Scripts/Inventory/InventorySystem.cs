@@ -14,20 +14,30 @@ public class InventorySystem : MonoBehaviour
         survival = GetComponent<PlayerSurvival>();
     }
 
-    private void OnTriggerEnter(Collider other)
+    public static string GetPickupName(Collider target)
     {
-        string item = "";
+        if (!target || !target.gameObject.activeInHierarchy)
+            return null;
 
-        if (other.CompareTag("wood"))
-            item = "Wood";
-        else if (other.CompareTag("food"))
-            item = "Food";
-        else if (other.CompareTag("plant"))
-            item = "Plant";
-        else if (other.CompareTag("ore"))
-            item = "Ore";
+        switch (target.tag)
+        {
+            case "wood": return "Wood";
+            case "food": return "Food";
+            case "plant": return "Plant";
+            case "ore": return "Ore";
+            default: return null;
+        }
+    }
 
-        if (item == "")
+    public bool CanCollect(string item)
+    {
+        return item != null && (itemNames.Count < 10 || itemNames.Contains(item));
+    }
+
+    public void Collect(Collider target)
+    {
+        string item = GetPickupName(target);
+        if (!CanCollect(item))
             return;
 
         int slot = itemNames.IndexOf(item);
@@ -39,15 +49,11 @@ public class InventorySystem : MonoBehaviour
         }
         else
         {
-            // new item goes into next empty slot.
-            if (itemNames.Count >= 10)
-                return;
-
             itemNames.Add(item);
             itemCounts.Add(1);
         }
 
-        other.gameObject.SetActive(false);
+        target.gameObject.SetActive(false);
     }
 
     public void UseItemInSlot(int slot)

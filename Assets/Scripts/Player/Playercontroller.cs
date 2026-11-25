@@ -6,6 +6,7 @@ using UnityEngine.InputSystem;
 public class PlayerController : MonoBehaviour
 {
     [SerializeField] private Transform spawnPoint;
+    [SerializeField] private Transform survivorBook;
 
     [Header("Movement")]
     public float moveSpeed = 5f;
@@ -30,10 +31,33 @@ public class PlayerController : MonoBehaviour
 
     private float jumpTimer;
     private bool sprintHeld;
+    private const float InteractionRange = 3f;
+    private const float PortalInteractionRange = 2f;
+    private const float BookMarkerRange = 6f;
+    private const float PortalMarkerRange = 12f;
+    private readonly RaycastHit[] interactionHits = new RaycastHit[32];
+    private readonly InteractionDisplay interactionDisplay = new InteractionDisplay();
+    private PortalFogVisibility[] portals;
+    private Camera interactionCamera;
+    private Renderer bookRenderer;
+    private InventorySystem inventory;
+    private Collider pickupTarget;
+    private PortalFogVisibility portalTarget;
+    private bool bookTarget;
+    private string interactionPrompt;
+    private int interactionFrame = -1;
+    private float timeScaleBeforeReading;
+
+    public bool HandledInteractionThisFrame => interactionFrame == Time.frameCount || IsReadingBook;
+    public bool IsReadingBook { get; private set; }
 
     private void Start()
     {
         controller = GetComponent<CharacterController>();
+        inventory = GetComponent<InventorySystem>();
+        portals = FindObjectsByType<PortalFogVisibility>(FindObjectsSortMode.None);
+        if (survivorBook)
+            bookRenderer = survivorBook.GetComponentInChildren<Renderer>();
         if (spawnPoint != null)
         {
             controller.enabled = false;
@@ -76,11 +100,17 @@ public class PlayerController : MonoBehaviour
         if (spawnPoint != null && cameraTransform != null)
             cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
 
+        if (cameraTransform)
+            interactionCamera = cameraTransform.GetComponentInChildren<Camera>();
+
         LockCursor();
     }
 
     private void Update()
     {
+        if (IsReadingBook)
+            return;
+
         // Read Sprint action state every frame.
         // Releasing Shift will stop sprinting.
         sprintHeld = sprintAction != null &&
@@ -96,6 +126,7 @@ public class PlayerController : MonoBehaviour
         }
 
         Move();
+        UpdateInteractionTarget();
     }
 
     // Input Action: Move
@@ -113,8 +144,180 @@ public class PlayerController : MonoBehaviour
     // Input Action: Jump
     public void OnJump(InputValue value)
     {
-        if (value.isPressed)
+        if (value.isPressed && !IsReadingBook)
             jumpTimer = 0.15f;
+    }
+
+    public void OnUseItem(InputValue value)
+    {
+        if (!value.isPressed || !isActiveAndEnabled)
+            return;
+
+        if (IsReadingBook)
+        {
+            interactionFrame = Time.frameCount;
+            CloseBook();
+            return;
+        }
+
+        UpdateInteractionTarget();
+        if (bookTarget)
+        {
+            interactionFrame = Time.frameCount;
+            IsReadingBook = true;
+            timeScaleBeforeReading = Time.timeScale;
+            Time.timeScale = 0f;
+            lookInput = Vector2.zero;
+            jumpTimer = 0f;
+        }
+        else if (pickupTarget)
+        {
+            interactionFrame = Time.frameCount;
+            inventory.Collect(pickupTarget);
+            UpdateInteractionTarget();
+        }
+        else if (portalTarget)
+        {
+            interactionFrame = Time.frameCount;
+            portalTarget.Activate();
+            UpdateInteractionTarget();
+        }
+    }
+
+    private void UpdateInteractionTarget()
+    {
+        interactionPrompt = null;
+        pickupTarget = null;
+        portalTarget = null;
+        bookTarget = false;
+        if (!cameraTransform || Time.timeScale == 0f || Cursor.lockState != CursorLockMode.Locked)
+            return;
+
+        var ray = new Ray(cameraTransform.position, cameraTransform.forward);
+        float nearest = InteractionRange;
+        int count = Physics.RaycastNonAlloc(ray, interactionHits, InteractionRange,
+            Physics.DefaultRaycastLayers, QueryTriggerInteraction.Collide);
+        for (int i = 0; i < count; i++)
+        {
+            var hit = interactionHits[i];
+            if (!hit.collider || hit.transform.IsChildOf(transform) || hit.distance >= nearest)
+                continue;
+
+            bool isPickup = inventory && InventorySystem.GetPickupName(hit.collider) != null;
+            if (hit.collider.isTrigger && !isPickup)
+                continue;
+
+            nearest = hit.distance;
+            pickupTarget = isPickup ? hit.collider : null;
+        }
+
+        if (bookRenderer && bookRenderer.gameObject.activeInHierarchy)
+        {
+            var bounds = bookRenderer.bounds;
+            bounds.Expand(.08f);
+            if (bounds.IntersectRay(ray, out float distance) && distance <= nearest)
+            {
+                bookTarget = true;
+                pickupTarget = null;
+                interactionPrompt = "[E] Read survivor's book";
+                return;
+            }
+        }
+
+        if (pickupTarget)
+        {
+            string item = InventorySystem.GetPickupName(pickupTarget);
+            interactionPrompt = inventory.CanCollect(item) ? "[E] Collect " + item.ToLowerInvariant() : "Inventory full";
+            return;
+        }
+
+        if (portals == null)
+            return;
+
+        float bestDistance = PortalInteractionRange * PortalInteractionRange;
+        foreach (var portal in portals)
+        {
+            if (!portal)
+                continue;
+            float distance = portal.GetApproachDistanceSquared(transform.position);
+            if (distance >= bestDistance)
+                continue;
+            portalTarget = portal;
+            bestDistance = distance;
+        }
+
+        if (portalTarget)
+            interactionPrompt = portalTarget.IsActivated ? null : "[E] Activate portal";
+    }
+
+    private void OnGUI()
+    {
+        if (IsReadingBook)
+        {
+            interactionDisplay.Draw(true, null);
+            return;
+        }
+
+        if (Time.timeScale <= 0f || Cursor.lockState != CursorLockMode.Locked)
+            return;
+
+        if (interactionCamera && Event.current.type == EventType.Repaint)
+        {
+            if (bookRenderer && bookRenderer.gameObject.activeInHierarchy)
+            {
+                Bounds bounds = bookRenderer.bounds;
+                Vector3 position = new Vector3(bounds.center.x, bounds.max.y + .015f, bounds.center.z);
+                if ((position - interactionCamera.transform.position).sqrMagnitude <= BookMarkerRange * BookMarkerRange)
+                    DrawInteractionMarker(position, survivorBook);
+            }
+
+            if (portals != null)
+            {
+                foreach (var portal in portals)
+                {
+                    if (portal && !portal.IsActivated &&
+                        portal.GetApproachDistanceSquared(transform.position) < PortalMarkerRange * PortalMarkerRange)
+                        DrawInteractionMarker(portal.InteractionMarkerPosition, portal.transform);
+                }
+            }
+        }
+
+        interactionDisplay.Draw(false, interactionPrompt);
+    }
+
+    private void DrawInteractionMarker(Vector3 position, Transform target)
+    {
+        Vector3 viewport = interactionCamera.WorldToViewportPoint(position);
+        if (viewport.z < interactionCamera.nearClipPlane || viewport.x <= 0f || viewport.x >= 1f ||
+            viewport.y <= 0f || viewport.y >= 1f)
+            return;
+
+        if (Physics.Linecast(interactionCamera.transform.position, position, out RaycastHit hit,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore) && !hit.transform.IsChildOf(target))
+            return;
+
+        Vector3 screen = interactionCamera.ViewportToScreenPoint(viewport);
+        interactionDisplay.DrawMarker(new Vector2(screen.x, Screen.height - screen.y));
+    }
+
+    private void OnDestroy()
+    {
+        interactionDisplay.ReleaseMarker();
+    }
+
+    private void CloseBook()
+    {
+        if (!IsReadingBook)
+            return;
+
+        IsReadingBook = false;
+        Time.timeScale = timeScaleBeforeReading;
+    }
+
+    private void OnDisable()
+    {
+        CloseBook();
+        interactionPrompt = null;
     }
 
     // Input Action: Sprint
@@ -129,6 +332,12 @@ public class PlayerController : MonoBehaviour
     {
         if (!value.isPressed)
             return;
+
+        if (IsReadingBook)
+        {
+            CloseBook();
+            return;
+        }
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;

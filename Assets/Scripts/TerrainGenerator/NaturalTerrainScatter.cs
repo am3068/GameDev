@@ -5,7 +5,12 @@ using UnityEngine;
 [DefaultExecutionOrder(100)]
 public class NaturalTerrainScatter : MonoBehaviour
 {
-    public enum Kind { Tree, Rock, Plant }
+    public enum Kind { Tree, Rock, Litter, Plant }
+
+    [SerializeField] private GameObject[] trailLitterPrefabs;
+    [SerializeField, Min(0)] private int trailLitterCount;
+    [SerializeField, Range(.5f, 1f)] private float treeCanopySpacing = .8f;
+    [SerializeField] private Shader foggedVegetation;
 
     private class Batch
     {
@@ -33,6 +38,7 @@ public class NaturalTerrainScatter : MonoBehaviour
 
     private readonly List<Batch> batches = new List<Batch>();
     private readonly List<Placement> placements = new List<Placement>();
+    private readonly Dictionary<Material, Material> vegetationMaterials = new Dictionary<Material, Material>();
 
     public void AddBatch(Kind kind, GameObject[] prefabs, BoxCollider[] exclusions, Transform parent,
         int count, int seed, float spacing, float pathClearance)
@@ -52,13 +58,18 @@ public class NaturalTerrainScatter : MonoBehaviour
             return;
 
         var paint = data.GetAlphamaps(0, 0, data.alphamapWidth, data.alphamapHeight);
+        var trees = batches.Find(batch => batch.kind == Kind.Tree);
+        if (trees != null && trailLitterCount > 0)
+            AddBatch(Kind.Litter, trailLitterPrefabs, trees.exclusions, trees.parent, trailLitterCount, trees.seed + 41, .8f, .12f);
+
+        var generator = GetComponentInParent<ProceduralForestGenerator>();
         batches.Sort((left, right) => left.kind.CompareTo(right.kind));
         foreach (var batch in batches)
-            Scatter(batch, terrain, paint);
+            Scatter(batch, terrain, paint, generator);
         batches.Clear();
     }
 
-    private void Scatter(Batch batch, Terrain terrain, float[,,] paint)
+    private void Scatter(Batch batch, Terrain terrain, float[,,] paint, ProceduralForestGenerator generator)
     {
         if (!batch.parent || batch.prefabs == null)
             return;
@@ -73,6 +84,7 @@ public class NaturalTerrainScatter : MonoBehaviour
         var data = terrain.terrainData;
         var origin = terrain.transform.position;
         var random = new System.Random(batch.seed);
+        bool mountainRocks = batch.kind == Kind.Rock && generator && generator.useSingleMountain && generator.addMountains;
         int placed = 0;
         for (int attempt = 0; attempt < batch.count * 60 && placed < batch.count; attempt++)
         {
@@ -81,7 +93,10 @@ public class NaturalTerrainScatter : MonoBehaviour
             float x = u * data.size.x;
             float z = v * data.size.z;
             float slope = data.GetSteepness(u, v);
-            if (slope > (batch.kind == Kind.Tree ? 24f : 33f) || Layer(paint, data.size, x, z, 0) < .85f)
+            float groundWeight = Layer(paint, data.size, x, z, 0);
+            if (mountainRocks)
+                groundWeight += Layer(paint, data.size, x, z, 2);
+            if (slope > (batch.kind == Kind.Tree ? 24f : mountainRocks ? 40f : 33f) || groundWeight < .85f)
                 continue;
 
             // Broad patches give the island open meadows between groups of trees and undergrowth.
@@ -89,6 +104,13 @@ public class NaturalTerrainScatter : MonoBehaviour
             float chance = batch.kind == Kind.Rock
                 ? Mathf.Lerp(.35f, .85f, slope / 33f)
                 : Mathf.Lerp(.12f, .95f, Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.28f, .68f, patch)));
+            if (mountainRocks)
+            {
+                float distance = Vector2.Distance(new Vector2(u, v), generator.mountainCenter);
+                float foothills = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(generator.mountainRadius * .65f,
+                    generator.mountainRadius * 1.5f, distance));
+                chance = Mathf.Lerp(.035f, .96f, foothills) * Mathf.Lerp(.52f, 1f, slope / 40f);
+            }
             if (random.NextDouble() > chance)
                 continue;
 
@@ -96,6 +118,8 @@ public class NaturalTerrainScatter : MonoBehaviour
             float variation = (float)random.NextDouble();
             float scale = batch.kind == Kind.Rock ? Mathf.Lerp(.38f, .97f, variation * variation) :
                 batch.kind == Kind.Tree ? Mathf.Lerp(.76f, 1.10f, variation) : Mathf.Lerp(.75f, 1.26f, variation);
+            if (batch.kind == Kind.Litter)
+                scale = Mathf.Lerp(.46f, .87f, variation);
             float radius = shape.radius * scale;
             float edge = radius + .5f;
             if (x < edge || z < edge || x > data.size.x - edge || z > data.size.z - edge)
@@ -103,12 +127,14 @@ public class NaturalTerrainScatter : MonoBehaviour
 
             var ground = origin + new Vector3(x, data.GetInterpolatedHeight(u, v), z);
             var point = new Vector2(ground.x, ground.z);
+            if (batch.kind == Kind.Litter && !OnTrail(paint, data.size, x, z, radius + 2.6f))
+                continue;
             if (InsideExclusion(batch.exclusions, ground, radius) ||
                 OnTrail(paint, data.size, x, z, radius + batch.pathClearance) ||
                 TooClose(batch, point, radius))
                 continue;
 
-            float lean = batch.kind == Kind.Rock ? .8f : batch.kind == Kind.Plant ? .2f : 0f;
+            float lean = batch.kind == Kind.Rock ? .8f : batch.kind == Kind.Litter ? 1f : batch.kind == Kind.Plant ? .2f : 0f;
             var normal = Vector3.Slerp(Vector3.up, data.GetInterpolatedNormal(u, v), lean);
             var rotation = Quaternion.FromToRotation(Vector3.up, normal) *
                 Quaternion.Euler(0f, (float)random.NextDouble() * 360f, 0f);
@@ -116,19 +142,68 @@ public class NaturalTerrainScatter : MonoBehaviour
             var position = ground - rotation * (shape.baseOffset * scale) - Vector3.up * embed;
             var instance = Instantiate(shape.prefab, position, rotation * shape.prefab.transform.rotation, batch.parent);
             instance.transform.localScale *= scale;
+            if (foggedVegetation && batch.kind != Kind.Rock)
+                SetVegetationMaterials(instance);
             placements.Add(new Placement { kind = batch.kind, point = point, radius = radius });
             placed++;
         }
+    }
+
+    private void SetVegetationMaterials(GameObject instance)
+    {
+        foreach (var renderer in instance.GetComponentsInChildren<Renderer>())
+        {
+            var materials = renderer.sharedMaterials;
+            for (int i = 0; i < materials.Length; i++)
+            {
+                var original = materials[i];
+                if (!original)
+                    continue;
+                bool cutout = original.shader.name == "Shader Graphs/TerrainGrass";
+                if (!cutout && original.shader.name != "Standard")
+                    continue;
+                if (!vegetationMaterials.TryGetValue(original, out var replacement))
+                {
+                    replacement = new Material(foggedVegetation) { name = original.name + " (Fogged)" };
+                    if (cutout)
+                    {
+                        replacement.mainTexture = original.GetTexture("Texture2D_E1B0D043");
+                        replacement.color = new Color(.80f, .81f, .76f);
+                        replacement.SetFloat("_Cutoff", .38f);
+                        replacement.SetFloat("_Cull", 0f);
+                        replacement.SetFloat("_Wind", .06f);
+                    }
+                    else
+                    {
+                        replacement.mainTexture = original.mainTexture;
+                        replacement.mainTextureScale = original.mainTextureScale;
+                        replacement.mainTextureOffset = original.mainTextureOffset;
+                        Color tint = original.color;
+                        replacement.color = new Color(tint.r * .83f, tint.g * .83f, tint.b * .83f, tint.a);
+                    }
+                    vegetationMaterials.Add(original, replacement);
+                }
+                materials[i] = replacement;
+            }
+            renderer.sharedMaterials = materials;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        foreach (var material in vegetationMaterials.Values)
+            Destroy(material);
     }
 
     private bool TooClose(Batch batch, Vector2 point, float radius)
     {
         foreach (var other in placements)
         {
-            float distance = (radius + other.radius) * .8f;
+            float spacing = batch.kind == Kind.Tree && other.kind == Kind.Tree ? treeCanopySpacing : .8f;
+            float distance = (radius + other.radius) * spacing;
             if (batch.kind == other.kind)
                 distance = Mathf.Max(distance, batch.spacing);
-            else if (batch.kind == Kind.Plant && other.kind == Kind.Tree)
+            else if ((batch.kind == Kind.Plant || batch.kind == Kind.Litter) && other.kind == Kind.Tree)
                 distance = radius + .65f;
             if ((point - other.point).sqrMagnitude < distance * distance)
                 return true;

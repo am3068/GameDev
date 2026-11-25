@@ -10,7 +10,7 @@ public class PortalTeleport : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (!other.CompareTag("Player") || !canTeleport)
+        if (!other.CompareTag("Player") || !canTeleport || !destination)
             return;
 
         PortalTeleport[] portals = FindObjectsOfType<PortalTeleport>();

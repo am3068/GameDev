@@ -23,10 +23,12 @@ public class ProceduralForestGenerator : MonoBehaviour
     [Range(0, 90)] public float rockSteepness = 45f;
     public bool smoothPathTransitions;
     [Min(1)] public float pathShoulderWidth = 5f;
+    [Range(0, 1)] public float trailSnowCoverage;
 
     [Header("Objects")]
     public Transform[] objectParents;
     [Min(0)] public float objectGroundInset;
+    public bool snapUsingRootRenderer;
 
     [Header("Shoreline")]
     public Transform shorelineWater;
@@ -104,8 +106,44 @@ public class ProceduralForestGenerator : MonoBehaviour
 
         terrain.SetHeights(0, 0, heights);
         PaintTerrain(terrain);
+        DustTrailsWithSnow();
         BlendShoreline();
         SnapObjectsToTerrain();
+    }
+
+    public void DustTrailsWithSnow()
+    {
+        if (trailSnowCoverage <= 0f || !forestTerrain || !HasMask())
+            return;
+
+        var terrain = forestTerrain.terrainData;
+        int snow = System.Array.IndexOf(terrain.terrainLayers, grassTexture);
+        int path = System.Array.IndexOf(terrain.terrainLayers, pathTexture);
+        if (snow < 0 || path < 0 || snow == path)
+            return;
+
+        int width = terrain.alphamapWidth;
+        int height = terrain.alphamapHeight;
+        var paint = terrain.GetAlphamaps(0, 0, width, height);
+        float offset = seed * .013f;
+        for (int z = 0; z < height; z++)
+        for (int x = 0; x < width; x++)
+        {
+            float u = x / (float)(width - 1);
+            float v = z / (float)(height - 1);
+            float originalPath = GetPath(u, v);
+            if (originalPath <= 0f || paint[z, x, path] <= 0f)
+                continue;
+
+            float broad = Mathf.PerlinNoise(u * terrain.size.x * .22f + offset, v * terrain.size.z * .22f);
+            float detail = Mathf.PerlinNoise(u * terrain.size.x * .8f, v * terrain.size.z * .8f + offset);
+            float patches = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.23f, .72f, broad * .75f + detail * .25f));
+            float remaining = Mathf.Max(Mathf.Min(originalPath, .12f), originalPath * (1f - patches * trailSnowCoverage));
+            float snowWeight = Mathf.Max(0f, paint[z, x, path] - remaining);
+            paint[z, x, path] -= snowWeight;
+            paint[z, x, snow] += snowWeight;
+        }
+        terrain.SetAlphamaps(0, 0, paint);
     }
 
     float MountainHeight(float u, float v, float noiseOffset)
@@ -270,7 +308,8 @@ public class ProceduralForestGenerator : MonoBehaviour
             // Move the whole prefab, not its individual parts
             foreach (Transform obj in parent)
             {
-                Renderer[] renderers = obj.GetComponentsInChildren<Renderer>();
+                var root = snapUsingRootRenderer ? obj.GetComponent<Renderer>() : null;
+                Renderer[] renderers = root ? new[] { root } : obj.GetComponentsInChildren<Renderer>();
                 if (renderers.Length == 0) continue;
 
                 float bottom = float.MaxValue;

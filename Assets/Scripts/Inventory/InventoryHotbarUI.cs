@@ -18,6 +18,7 @@ public class InventoryHotbarUI : MonoBehaviour
     private TMP_Text[] labels;
     private InputAction[] slotKeys = new InputAction[10];
     private InputAction useKey;
+    private PlayerController playerController;
     private int selectedSlot = 0;
 
     private void Awake()
@@ -29,6 +30,7 @@ public class InventoryHotbarUI : MonoBehaviour
 
         if (playerInput != null)
         {
+            playerController = playerInput.GetComponent<PlayerController>();
             for (int i = 0; i < 10; i++)
             {
                 string actionName = i == 9
@@ -74,6 +76,7 @@ public class InventoryHotbarUI : MonoBehaviour
 
         if (useKey != null &&
             useKey.WasPressedThisFrame() &&
+            (!playerController || !playerController.HandledInteractionThisFrame) &&
             inventory != null)
         {
             inventory.UseItemInSlot(selectedSlot);
